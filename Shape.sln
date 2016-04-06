@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{50CEF1D2-5A9A-4D06-9CD7-F6C2D59500C5}") = "Raytracer", "src\Raytracer\Raytracer.xproj", "{15E4E9DC-3D74-4491-8F23-E4B8E382F635}"
+Project("{50CEF1D2-5A9A-4D06-9CD7-F6C2D59500C5}") = "Shape", "src\Shape\Shape.xproj", "{15E4E9DC-3D74-4491-8F23-E4B8E382F635}"
 EndProject
-Project("{50CEF1D2-5A9A-4D06-9CD7-F6C2D59500C5}") = "Raytracer.Test", "test\Raytracer.Test\Raytracer.Test.xproj", "{3DAB4CFB-0F12-49A1-AAA1-843E37527BDB}"
+Project("{50CEF1D2-5A9A-4D06-9CD7-F6C2D59500C5}") = "Shape.Test", "test\Shape.Test\Shape.Test.xproj", "{3DAB4CFB-0F12-49A1-AAA1-843E37527BDB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
