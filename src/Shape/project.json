@@ -1,7 +1,10 @@
 {
     "version": "0.0.0",
-    "description": "",
+    "description": "Library built for the creation of shapes.",
     "authors": [
+        "Markus Thomsen <matho@itu.dk>",
+        "Andreas Bjørn Hassing Nielsen <abhn@itu.dk>",
+        "Anders Munck Højsgaard <amuh@itu.dk>"
     ],
     "tags": [
     ],
@@ -9,6 +12,11 @@
     "licenseUrl": "https://github.itu.dk/bndn/shape/blob/master/LICENSE.md",
 
     "dependencies": {
+        "Material": "",
+        "Point": "",
+        "Ray": "",
+        "Texture": "",
+        "Vector": "",
         "FSharp.Dnx": {
             "type": "build",
             "version": "1.0.0-*"
@@ -30,7 +38,8 @@
     },
     "fsharp": {
         "files": [
-            "Program.fs"
+            "Shape.fsi",
+            "Shape.fs"
         ]
     }
 }
