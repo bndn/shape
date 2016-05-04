@@ -12,7 +12,7 @@ open Point
 open Shape
 
 [<Literal>]
-let Epsilon = 10e-6
+let Epsilon = 1.0e-6
 
 let mat = Material.make (Color.make 1. 0. 0.) 1.
 let texture = Texture.make (fun _ _ -> mat)
@@ -203,6 +203,34 @@ let ``getHitMaterial should return the Material of a hitpoint ``() =
     hitMaterial |> should equal mat
 
 [<Fact>]
+let ``hitFunction should return a hitpoint for a ray and a disc``() =
+    let center = Point.make 0. 0. 0.
+    let radius = 1.
+    let disc = Shape.mkDisc center radius texture
+
+    let rO = Point.make 1. 0. -3.
+    let rV = Vector.make 0. 0. 1.
+    let ray = Ray.make rO rV
+
+    let result = Shape.hitFunction ray disc
+    result |> should be instanceOfType<Hitpoint list>
+    List.length result |> should equal 1
+
+[<Fact>]
+let ``hitFunction should return nothing if we do not hit in the disc with our ray``() =
+    let center = Point.make 0. 0. 0.
+    let radius = 1.
+    let disc = Shape.mkDisc center radius texture
+
+    let rO = Point.make -2. -1. 0.
+    let rV = Vector.make 0. 1. 0.
+    let ray = Ray.make rO rV
+
+    let result = Shape.hitFunction ray disc
+    result |> should be instanceOfType<Hitpoint list>
+    List.length result |> should equal 0
+
+[<Fact>]
 let ``mkUnion should create Union of two spheres`` () =
     let union = Shape.mkUnion sphereOrigo sphereShiftOne
     union |> should be instanceOfType<Shape>
@@ -320,14 +348,16 @@ let ``hitFunction should return 2 hitpoints for ray which hits sphere glancingly
 let ``getBounds returns the bounds of a shape as a quadruplet`` () =
     let bounds = Shape.getBounds sphereShiftOne
 
+    let Delta = 1.0e-5
+
     match bounds with
     | Some((p, width, height, depth)) ->
-        Point.getX p |> should (equalWithin Epsilon) -1.
-        Point.getY p |> should (equalWithin Epsilon) 0.
-        Point.getZ p |> should (equalWithin Epsilon) -1.
-        width        |> should (equalWithin Epsilon) 2.
-        height       |> should (equalWithin Epsilon) 2.
-        depth        |> should (equalWithin Epsilon) 2.
+        Point.getX p |> should (equalWithin Delta) -1.
+        Point.getY p |> should (equalWithin Delta) 0.
+        Point.getZ p |> should (equalWithin Delta) -1.
+        width        |> should (equalWithin Delta) 2.
+        height       |> should (equalWithin Delta) 2.
+        depth        |> should (equalWithin Delta) 2.
     | None -> bounds.IsNone |> should be False // fail!
 
 [<Fact>]
@@ -381,9 +411,9 @@ let ``hitFunction should return 2 hitpoints 1 unit apart for deadcenter ray and 
     let rayVector = Vector.make 0. 1. 0.
     let ray = Ray.make rayOrigin rayVector
     let hitList = Shape.hitFunction ray intersection
-    
+
     List.length hitList |> should equal 2
- 
+
     (distCheck hitList 1.0 0 1) |> should equal true
 
 [<Fact>]
@@ -393,7 +423,7 @@ let ``hitFunction should return 0 hitpoints for off-center ray and an intersecti
     let rayVector = Vector.make 0. 1. 0.
     let ray = Ray.make rayOrigin rayVector
     let hitList = Shape.hitFunction ray intersection
-    
+
     List.length hitList |> should equal 0
 
 [<Fact>]
@@ -403,11 +433,11 @@ let ``hitFunction should return 1 hitpoints for ray glancing shape2 in shape1 in
     let rayVector = Vector.make 0. 0. 2.
     let ray = Ray.make rayOrigin rayVector
     let hitList = Shape.hitFunction ray intersection
-    
+
     List.length hitList |> should equal 1
 
 [<Fact>]
-let ```hitFunction should return 1 hitpoints for ray which hits sphere deadcenter in an intersection of sphere and plane`` () =
+let ``hitFunction should return 1 hitpoints for ray which hits sphere deadcenter in an intersection of sphere and plane`` () =
     let intersection = Shape.mkIntersection sphereOrigo planeOrigo
     let rayOrigin = Point.make 0.0 -3. 0.
     let rayVector = Vector.make 0. 1. 0.
@@ -480,13 +510,13 @@ let ``hitFunction should return 0 hitpoints for ray which goes under HollowCylin
     List.length hitList |> should equal 0
 
 [<Fact>]
-let ```hitFunction should return 0 hitpoints for ray which hits plane outside of sphere in an intersection of sphere and plane`` () =
+let ``hitFunction should return 0 hitpoints for ray which hits plane outside of sphere in an intersection of sphere and plane`` () =
     let intersection = Shape.mkIntersection sphereOrigo planeOrigo
     let rayOrigin = Point.make 1.0 -3. 1.
     let rayVector = Vector.make 0. 1. 0.
     let ray = Ray.make rayOrigin rayVector
     let hitList = Shape.hitFunction ray intersection
-    
+
     List.length hitList |> should equal 0
 
 [<Fact>]
