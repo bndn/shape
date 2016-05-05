@@ -171,7 +171,6 @@ let ``getHitNormal should return the normal vector of a hitpoint ``() =
     hitNormal |> should be instanceOfType<Vector>
     hitNormal |> should equal (Vector.make 0. -1. 0.)
 
-
 [<Fact>]
 let ``getHitMaterial should return the Material of a hitpoint ``() =
     let sphereOrigin = Point.make 0. 0. 0.

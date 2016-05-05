@@ -138,13 +138,12 @@ let distance a b c =
 /// (going outwards from the sphere surface) and the material for the
 /// hitpoint.
 /// </returns>
-let sphereDeterminer d rayV rayO r t =
+let sphereDeterminer d center rayV rayO t =
     // hitpoint on sphere
     let hitPoint = Point.move rayO (Vector.multScalar rayV d)
-    let (hpx, hpy, hpz) = Point.getCoord hitPoint
 
     // normalised vector from hitpoint towards center
-    let n = Vector.make (hpx / r) (hpy / r) (hpz / r)
+    let n = Vector.normalise <| Point.distance center hitPoint
     let (nx, ny, nz) = Vector.getCoord n
 
     let theta = acos ny      // angle in y-space
@@ -204,9 +203,9 @@ let hitFunction ray shape =
         let distances = distance a b c
         match distances with
         | []         -> List.empty
-        | [hp]       -> [sphereDeterminer hp rayVector rayOrigin radius texture]
-        | [hp1; hp2] -> [sphereDeterminer hp1 rayVector rayOrigin radius texture;
-                         sphereDeterminer hp2 rayVector rayOrigin radius texture]
+        | [hp]       -> [sphereDeterminer hp center rayVector rayOrigin texture]
+        | [hp1; hp2] -> [sphereDeterminer hp1 center rayVector rayOrigin texture;
+                         sphereDeterminer hp2 center rayVector rayOrigin texture]
         | _          -> failwith "Error: Hitting a sphere more than two times!"
     | Triangle(a, b, c, material) ->
         // Möller-Trumbore intersection algorithm
