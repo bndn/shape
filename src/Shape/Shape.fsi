@@ -82,6 +82,12 @@ val mkSphere : center:Point -> radius:float -> t:Texture -> Shape
 /// </returns>
 val mkTriangle : a:Point -> b:Point -> c:Point -> m:Material -> Shape
 
+val mkUnion : Shape -> Shape -> Shape
+
+val mkIntersection : Shape -> Shape -> Shape
+
+val mkSubtraction : Shape -> Shape -> Shape
+
 /// <summary>
 /// Shoot a ray, and check if it hits the specificed shape.
 /// Returns a hitpoint for each point on the shape that
