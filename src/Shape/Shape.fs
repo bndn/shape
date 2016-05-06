@@ -15,7 +15,7 @@ let EPSILON = 1.0e-6
 type Shape =
     | Plane of Point * Vector * Texture
     | Sphere of Point * float * Texture
-    | Triangle of Point * Point * Point * Material
+    | Triangle of Point * Point * Point * Texture
 
 type Hitpoint =
     | Hit of float * Vector * Material
@@ -96,7 +96,7 @@ let mkSphere center radius texture =
 /// </returns>
 let mkTriangle a b c material =
     if a = b || a = c || b = c then raise NonPositiveShapeSizeException
-    Triangle(a, b, c, material)
+    Triangle(a, b, c, Texture.make (fun x y -> material))
 
 /// <summary>
 /// Calculates the hit distances between a ray and a shape created from
@@ -207,7 +207,9 @@ let hitFunction ray shape =
         | [hp1; hp2] -> [sphereDeterminer hp1 center rayVector rayOrigin texture;
                          sphereDeterminer hp2 center rayVector rayOrigin texture]
         | _          -> failwith "Error: Hitting a sphere more than two times!"
-    | Triangle(a, b, c, material) ->
+    | Triangle(a, b, c, t) ->
+        let material =  Texture.getMaterial 0. 0. t
+
         // Möller-Trumbore intersection algorithm
         let e1 = Point.distance a b
         let e2 = Point.distance a c
