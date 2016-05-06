@@ -541,3 +541,46 @@ let ``hitFunction should return 0 hitpoints for ray deadcenter in subtraction of
     let hitList = Shape.hitFunction ray subtraction
 
     List.length hitList |> should equal 0
+
+[<Fact>]
+let ``hitFunction through the top of a box returns hitpoints for the top and bottom`` () =
+    let low = Point.make 0. 0. 0.
+    let high = Point.make 1. 1. 1.
+    let t = texture
+    let box = Shape.mkBox low high t t t t t t
+
+    let rayOrigin = Point.make 0.5 1.5 0.5
+    let rayVector = Vector.make 0. -1. 0.
+    let ray = Ray.make rayOrigin rayVector
+
+    let (top, bottom) = match Shape.hitFunction ray box with
+                        | top :: bottom :: [] -> top, bottom
+                        | _ -> failwith "Failed to hit box twice"
+
+    let topNormal = Shape.getHitNormal top
+    let bottomNormal = Shape.getHitNormal bottom
+
+    topNormal |> should equal <| Vector.make 0. 1. 0.
+    bottomNormal |> should equal <| Vector.make 0. -1. 0.
+
+[<Fact>]
+let ``hitFunction through the sides of a box returns hitpoints for both the sides`` () =
+    let low = Point.make 0. 0. 0.
+    let high = Point.make 1. 1. 1.
+    let t = texture
+    let box = Shape.mkBox low high t t t t t t
+
+    let rayOrigin = Point.make 1.5 0.5 0.5
+    // check when the ray is not axis aligned
+    let rayVector = Vector.make -1.001 0. 0.
+    let ray = Ray.make rayOrigin rayVector
+
+    let (right, left) = match Shape.hitFunction ray box with
+                       | right :: top :: [] -> right, top
+                       | _ -> failwith "Failed to hit box twice"
+
+    let rightNormal = Shape.getHitNormal right
+    let leftNormal = Shape.getHitNormal left
+
+    rightNormal |> should equal <| Vector.make 1. 0. 0.
+    leftNormal |> should equal <| Vector.make -1. 0. 0.

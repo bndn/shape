@@ -133,6 +133,23 @@ val mkIntersection : Shape -> Shape -> Shape
 val mkSubtraction : Shape -> Shape -> Shape
 
 /// <summary>
+/// Make a box with a low and high point and 6 textures, one for each side.
+/// </summary>
+/// <param name=low>The low point in the box.</param>
+/// <param name=high>The high point in the box.</param>
+/// <param name=front>The texture on the front side.</param>
+/// <param name=back>The texture on the back side.</param>
+/// <param name=top>The texture on the top side.</param>
+/// <param name=bottom>The texture on the bottom side.</param>
+/// <param name=left>The texture on the left side.</param>
+/// <param name=right>The texture on the right side.</param>
+/// <returns>
+/// A box object, with a high and low point, and a texture for each side.
+/// </returns>
+val mkBox : low:Point -> high:Point -> front:Texture -> back:Texture ->
+            top:Texture -> bottom:Texture -> left:Texture -> right:Texture -> Shape
+
+/// <summary>
 /// Shoot a ray, and check if it hits the specificed shape.
 /// Returns a hitpoint for each point on the shape that
 /// was hit, as a list.
