@@ -230,6 +230,24 @@ let hitFunction ray shape =
         | [hp1; hp2] -> [sphereDeterminer hp1 center rayVector rayOrigin texture;
                          sphereDeterminer hp2 center rayVector rayOrigin texture]
         | _          -> failwith "Error: Hitting a sphere more than two times!"
+    | HollowCylinder(center, radius, height, texture) ->
+        // unit cylinder along the y-axis: x^2+z^2 = 1
+        let (dx, dy, dz) = Vector.getCoord rayVector
+        let (ox, oy, oz) = Point.getCoord rayOrigin
+        let (x, y, z) = Point.getCoord center
+
+        let a = dx**2. + dz**2.
+        let b = 2. * ((ox - x) * dx + (oz - z) * dz)
+        let c = (ox - x)**2. + (oz - z)**2. - radius**2.
+        let distances = distance a b c
+
+        let material = Texture.getMaterial 0. 0. texture
+        match distances with
+        | []         -> List.empty
+        | [hp]       -> [Hit(hp, Vector.make 1. 0. 0., material)]
+        | [hp1; hp2] -> [Hit(hp1, Vector.make 1. 0. 0., material);
+                         Hit(hp2, Vector.make 1. 0. 0., material)]
+        | _          -> failwith "Error: Hitting a cylinder more than two times!"
     | Triangle(a, b, c, t) ->
         let material =  Texture.getMaterial 0. 0. t
 
