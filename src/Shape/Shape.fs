@@ -15,6 +15,7 @@ let EPSILON = 1.0e-6
 type Shape =
     | Plane of Point * Vector * Texture
     | Sphere of Point * float * Texture
+    | HollowCylinder of Point * float * float * Texture
     | Triangle of Point * Point * Point * Texture
 
 type Hitpoint =
@@ -83,6 +84,28 @@ let mkPlane p0 up texture =
 let mkSphere center radius texture =
     if radius <= 0. then raise NonPositiveShapeSizeException
     Sphere(center, radius, texture)
+
+/// <summary>
+/// Make a hollow cylinder with a center point of origin, a radius,
+/// a height and a texture.
+/// </summary>
+/// <param name=center>
+/// The center point at the bottom (or top, if the height is negative)
+/// of the cylinder.
+/// </param>
+/// <param name=radius>The radius of the cylinder.</param>
+/// <param name=height>
+/// The height of the cylinder. Can be negative, which will make
+/// the cylinder grow in the negative direction of the y-axis.
+/// </param>
+/// <param name=t>The texture of the cylinder.</param>
+/// <returns>
+/// A hollow cylinder object, with a center point of origin, a radius,
+/// a height and a texture.
+/// </returns>
+let mkHollowCylinder center radius height texture =
+    if radius <= 0. || height = 0. then raise NonPositiveShapeSizeException
+    HollowCylinder(center, radius, height, texture)
 
 /// <summary>
 /// Make a triangle with points, `a`, `b` and `c`.
