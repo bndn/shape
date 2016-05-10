@@ -17,6 +17,9 @@ type Composition =
     | Subtraction
     | Intersection
 
+type Bounds =
+    | BB of Point * float * float * float
+
 type Shape =
     | Plane of Point * Vector * Texture
     | Sphere of Point * float * Texture
@@ -58,6 +61,61 @@ let getHitNormal (Hit(_, n, _)) = n
 /// <param name=hp>The hitpoint on the shape to get the material of.</param>
 /// <returns>The material on the shape at the hitpoint.</returns>
 let getHitMaterial (Hit(_, _, m)) = m
+
+/// <summary>
+/// Combine the bounds of two shapes into a single boundary.
+/// </summary>
+/// <param name=b1>The first boundary in the combination.</param>
+/// <param name=b2>The second boundary in the combination.<param>
+/// <returns>The combined bounds of b1 and b2.</returns>
+let combineBounds = function
+    | (None, None)       -> None
+    | (Some bound, None) -> Some bound
+    | (None, Some bound) -> Some bound
+    | (Some (BB(b1, b1w, b1h, b1d)), Some (BB(b2, b2w, b2h, b2d))) ->
+        // get coordinates of bounding boxes' starting points
+        let (b1x, b1y, b1z), (b2x, b2y, b2z) =
+            Point.getCoord b1, Point.getCoord b2
+        // get coordinates of higher bounds of the two bounding boxes
+        let (b1x2, b1y2, b1z2), (b2x2, b2y2, b2z2) =
+            Point.getCoord (Point.move b1 (Vector.make b1w b1h b1d)),
+                Point.getCoord (Point.move b2 (Vector.make b2w b2h b2d))
+
+        let (lx, ly, lz) = min b1x b2x, min b1y b2y, min b1z b2z
+        let (hx, hy, hz) = max b1x2 b2x2, max b1y2 b2y2, max b1z2 b2z2
+        let boundsP0 = Point.make lx ly lz
+        let bounds = BB(boundsP0, abs (hx - lx), abs (hy - ly), abs (hz - lz))
+        Some bounds
+
+/// <summary>
+/// Get the bounds of a shape.
+/// </summary>
+/// <param name=s>The shape to get the bounds of.</param>
+/// <returns>The bounds of the shape.</returns>
+let getBounds shape =
+    let rec getBounds' shape cont =
+        match shape with
+        | Plane(_, _, _)       -> None
+        | Sphere(c, r, _)      ->
+            let cx, cy, cz = Point.getCoord c
+            let boundsP0 = Point.make (cx - r) (cy - r) (cz - r)
+            let bounds = BB(boundsP0, r * 2., r * 2., r * 2.)
+            cont (Some(bounds))
+        | Triangle(a, b, c, _) ->
+            let (ax, ay, az), (bx, by, bz), (cx, cy, cz) =
+                Point.getCoord a, Point.getCoord b, Point.getCoord c
+
+            let (lx, ly, lz) = min ax (min bx cx), min ay (min by cy), min az (min bz cz)
+            let (hx, hy, hz) = max ax (max bx cx), max ay (max by cy), max az (max bz cz)
+            let boundsP0 = Point.make lx ly lz
+            let bounds = BB(boundsP0, abs (hx - lx), abs (hy - ly), abs (hz - lz))
+            cont (Some(bounds))
+        | Composite(s1, s2, _) ->
+            let bounds = getBounds' s1 (fun s1b ->
+                            getBounds' s2 (fun s2b ->
+                                cont (combineBounds (s1b, s2b))))
+            bounds
+    getBounds' shape id
 
 /// <summary>
 /// Make a plane with a point of origin (affects the texture mapping),
@@ -134,6 +192,54 @@ let mkSubtraction shape1 shape2 = Composite(shape1, shape2, Subtraction)
 /// </returns>
 let mkIntersection shape1 shape2 = Composite(shape1, shape2, Intersection)
 
+/// Check if a ray hits a boundingbox.
+/// </summary>
+/// <param name=bbox>The boundingbox to check ray intersection with.</param>
+/// <param name=rayO>
+/// The origin of the ray to check boundingbox intersection with.
+/// </param>
+/// <param name=rayD>
+/// The direction of the ray to check boundingbox intersection with.
+/// </param>
+/// <returns>
+/// True, in the case that the ray hits the boundingbox (in the
+/// positive direction), else false.
+/// </returns>
+let hitsBounds (BB(p0, width, height, depth)) rayO rayD =
+    let (lx, ly, lz) = Point.getCoord p0
+    let (hx, hy, hz) = Point.make (lx + width) (ly + height) (lz + depth)
+                       |> Point.getCoord
+
+    let (ox, oy, oz) = Point.getCoord rayO
+    let (dx, dy, dz) = Vector.getCoord rayD
+    let (idx, idy, idz) = 1. / dx, 1. / dy, 1. / dz // inverse ray direction
+
+    let (txmin, txmax) =
+        if idx < 0.
+        then ((hx - ox) * idx), ((lx - ox) * idx)
+        else ((lx - ox) * idx), ((hx - ox) * idx)
+    let (tymin, tymax) =
+        if idy < 0.
+        then ((hy - oy) * idy), ((ly - oy) * idy)
+        else ((ly - oy) * idy), ((hy - oy) * idy)
+
+    if txmin > tymax || tymin > txmax then false else
+
+    let tmin = if tymin > txmin then tymin else txmin
+    let tmax = if tymax < txmax then tymax else txmax
+
+    let (tzmin, tzmax) =
+        if idz < 0.
+        then ((hz - oz) * idz), ((lz - oz) * idz)
+        else ((lz - oz) * idz), ((hz - oz) * idz)
+
+    if tmin > tzmax || tzmin > tmax then false else
+
+    let tmin = if tzmin > tmin then tzmin else tmin
+    let tmax = if tzmax < tmax then tzmax else tmax
+
+    tmin > 0. || tmax > 0.
+
 /// <summary>
 /// Calculates the hit distances between a ray and a shape created from
 /// a polynomial expression, using values a, b and c from the expression.
@@ -174,7 +280,7 @@ let sortToTuples shape1 shape2 hits1 hits2 =
     let shape1list = List.map (fun x -> (1,shape1,x)) hits1
     let shape2list = List.map (fun x -> (2,shape2,x)) hits2
     let tupleList = shape1list @ shape2list
-    List.sortWith (fun (_,_,h1) (_,_,h2) -> 
+    List.sortWith (fun (_,_,h1) (_,_,h2) ->
         let d1 = getHitDistance h1
         let d2 = getHitDistance h2
         if d1 > d2 then 1 elif d1 < d2 then -1 else 0) tupleList
@@ -317,9 +423,9 @@ let rec shapeNonSolid ray hit shape c =
 /// </returns>
 let rec unionHitFunction ray hitTupleList hitList =
     match hitTupleList with
-    | (_,s,h) :: hitTupleList when isOrthogonal ray (getHitNormal h) || shapeNonSolid ray h s (fun x -> x) -> 
+    | (_,s,h) :: hitTupleList when isOrthogonal ray (getHitNormal h) || shapeNonSolid ray h s (fun x -> x) ->
         unionHitFunction ray hitTupleList (h :: hitList)
-    | (id1,s1,h1) :: (id2,s2,h2) :: hitTupleList when id1 = id2 -> 
+    | (id1,s1,h1) :: (id2,s2,h2) :: hitTupleList when id1 = id2 ->
         unionHitFunction ray hitTupleList (h1 :: h2 :: hitList)
     | (id1,s1,h1) :: (id2,s2,h2) :: hitTupleList when id1 <> id2 ->
         let exitTuple = findExitHit hitTupleList
@@ -339,6 +445,12 @@ let rec unionHitFunction ray hitTupleList hitList =
 let rec hitFunction ray shape =
     let rayVector = Ray.getVector ray
     let rayOrigin = Ray.getOrigin ray
+    let bounds = getBounds shape
+    let withinBounds = match bounds with
+                       | None     -> true
+                       | Some(bb) -> hitsBounds bb rayOrigin rayVector
+
+    if not withinBounds then List.empty else
     match shape with
     | Plane(p0, normal, texture) ->
         let rdn = rayVector * normal // ray and normal dotproduct

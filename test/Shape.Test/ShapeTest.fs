@@ -224,7 +224,7 @@ let ``hitFunction should return 2 hitpoints 3 units apart for deadcenter ray and
 
     List.length hitList |> should equal 2
     (distCheck hitList 3.0 1 0) |> should equal true
-    
+
 [<Fact>]
 let ``hitFunction should return 4 hitpoints for offcenter ray and a union of two adjacent spheres`` () =
     let union = Shape.mkUnion sphereOrigo sphereShiftOne
@@ -258,6 +258,15 @@ let ``hitFunction should return 2 hitpoints for ray which hits shape1 in a union
     let rayVector = Vector.make -1. 0. 0.
     let ray = Ray.make rayOrigin rayVector
     let hitList = Shape.hitFunction ray union
+
+    List.length hitList |> should equal 2
+
+[<Fact>]
+let ``hitFunction returns 2 hitpoints for ray which hits shape2`` () =
+    let rayOrigin = Point.make 2. 1.5 0.
+    let rayVector = Vector.make -1. 0. 0.
+    let ray = Ray.make rayOrigin rayVector
+    let hitList = Shape.hitFunction ray sphereShiftOne
 
     List.length hitList |> should equal 2
 
@@ -303,5 +312,3 @@ let ```hitFunction should return 2 hitpoints for ray which hits sphere glancingl
     List.length hitList |> should equal 2
 
     (distCheck hitList 1.0 0 1) |> should equal true
-
-
