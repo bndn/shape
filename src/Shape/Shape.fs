@@ -1,4 +1,4 @@
-/// Copyright (C) 2015 The Authors.
+// Copyright (C) 2015 The Authors.
 module Shape
 
 open System // for Math
@@ -461,8 +461,8 @@ let rec hitInNonSolid point shape c =
 /// </returns>
 let rec shapeNonSolid ray hit shape c =
     match shape with
-    | Plane(_,_,_) -> c true
-    | Triangle(_,_,_,_) -> c true
+    | Plane(_,_,_) -> true
+    | Triangle(_,_,_,_) -> true
     // If one of the shapes in an Intersection is 1 dimensional, both are.
     | Composite(shape1,shape2,Intersection) ->
         shapeNonSolid ray hit shape1 (fun s1 ->
@@ -471,7 +471,7 @@ let rec shapeNonSolid ray hit shape c =
     | Composite(shape1,shape2,Union) ->
         let rayV  = Vector.multScalar (Ray.getVector ray) (getHitDistance hit)
         let point = Point.move (Ray.getOrigin ray) rayV
-        hitInNonSolid point shape (fun x -> x)
+        hitInNonSolid point shape id
     // The difference between two shapes will always have the same solidity as shape 1
     | Composite(shape1,shape2,Subtraction) ->
         shapeNonSolid ray hit shape1 c
@@ -488,7 +488,7 @@ let rec shapeNonSolid ray hit shape c =
 /// </returns>
 let rec unionHitFunction ray hitTupleList hitList =
     match hitTupleList with
-    | (_,s,h) :: hitTupleList when isOrthogonal ray (getHitNormal h) || shapeNonSolid ray h s (fun x -> x) ->
+    | (_,s,h) :: hitTupleList when isOrthogonal ray (getHitNormal h) || shapeNonSolid ray h s id -> 
         unionHitFunction ray hitTupleList (h :: hitList)
     | (id1,s1,h1) :: (id2,s2,h2) :: hitTupleList when id1 = id2 ->
         unionHitFunction ray hitTupleList (h1 :: h2 :: hitList)
@@ -498,6 +498,32 @@ let rec unionHitFunction ray hitTupleList hitList =
     | (id,s,h) :: hitTupleList ->
         unionHitFunction ray hitTupleList (h :: hitList)
     | [] -> hitList
+
+/// <summary>
+/// Hitfunction specific to the Intersection composite.
+/// </summary>
+/// <param name="ray"> The ray to check for hits. </param>
+/// <param name="hitTupleList"> A list containing triples of the type (id,shape,hit) </param>
+/// <param name="hitList"> An empty list, acting as accumulator, to which the hits of the union are added. </param>
+/// <param name="inside"> Parameter determining whether the recursion is currently inside another shape or not. </param>
+/// <returns>
+/// A list of hitpoints.
+/// </returns>
+let rec intersectionHitFunction ray hitTupleList hitList inside =
+    match hitTupleList with
+    | (_,s,h) :: hitTupleList when isOrthogonal ray (getHitNormal h) || shapeNonSolid ray h s id -> 
+        if inside then intersectionHitFunction ray hitTupleList (h :: hitList) true
+        else intersectionHitFunction ray hitTupleList hitList false
+    | (id1,s1,h1) :: (id2,s2,h2) :: hitTupleList when id1 = id2 -> 
+        if inside then intersectionHitFunction ray hitTupleList (h1 :: h2 :: hitList) true
+        else intersectionHitFunction ray hitTupleList hitList false
+    | (id1,s1,h1) :: (id2,s2,h2) :: hitTupleList when id1 <> id2 ->
+        if inside then intersectionHitFunction ray hitTupleList (h1 :: hitList) (shapeNonSolid ray h2 s2 id)
+        else intersectionHitFunction ray hitTupleList (h2 :: hitList) (not (shapeNonSolid ray h2 s2 id))
+    | (id,s,h) :: hitTupleList ->
+        hitList
+    | [] ->
+        hitList
 
 /// <summary>
 /// Shoot a ray, and check if it hits the specificed shape.
@@ -613,6 +639,6 @@ let rec hitFunction ray shape =
         | Subtraction ->
             failwith "Subtraction is not implemented yet"
         | Intersection ->
-            failwith "Intersection is not implemented yet"
+            intersectionHitFunction ray hitTupleList [] false
     | _ ->
         failwith "No hit function for this shape"
