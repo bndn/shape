@@ -17,8 +17,7 @@ type Composition =
     | Subtraction
     | Intersection
 
-type Bounds =
-    | BB of Point * float * float * float
+type Bounds = Point * float * float * float
 
 type Shape =
     | Plane of Point * Vector * Texture
@@ -72,7 +71,7 @@ let combineBounds = function
     | (None, None)       -> None
     | (Some bound, None) -> Some bound
     | (None, Some bound) -> Some bound
-    | (Some (BB(b1, b1w, b1h, b1d)), Some (BB(b2, b2w, b2h, b2d))) ->
+    | (Some (b1, b1w, b1h, b1d), Some (b2, b2w, b2h, b2d)) ->
         // get coordinates of bounding boxes' starting points
         let (b1x, b1y, b1z), (b2x, b2y, b2z) =
             Point.getCoord b1, Point.getCoord b2
@@ -84,7 +83,7 @@ let combineBounds = function
         let (lx, ly, lz) = min b1x b2x, min b1y b2y, min b1z b2z
         let (hx, hy, hz) = max b1x2 b2x2, max b1y2 b2y2, max b1z2 b2z2
         let boundsP0 = Point.make lx ly lz
-        let bounds = BB(boundsP0, abs (hx - lx), abs (hy - ly), abs (hz - lz))
+        let bounds = (boundsP0, abs (hx - lx), abs (hy - ly), abs (hz - lz))
         Some bounds
 
 /// <summary>
@@ -99,7 +98,7 @@ let getBounds shape =
         | Sphere(c, r, _)      ->
             let cx, cy, cz = Point.getCoord c
             let boundsP0 = Point.make (cx - r) (cy - r) (cz - r)
-            let bounds = BB(boundsP0, r * 2., r * 2., r * 2.)
+            let bounds = (boundsP0, r * 2., r * 2., r * 2.)
             cont (Some(bounds))
         | Triangle(a, b, c, _) ->
             let (ax, ay, az), (bx, by, bz), (cx, cy, cz) =
@@ -108,7 +107,7 @@ let getBounds shape =
             let (lx, ly, lz) = min ax (min bx cx), min ay (min by cy), min az (min bz cz)
             let (hx, hy, hz) = max ax (max bx cx), max ay (max by cy), max az (max bz cz)
             let boundsP0 = Point.make lx ly lz
-            let bounds = BB(boundsP0, abs (hx - lx), abs (hy - ly), abs (hz - lz))
+            let bounds = (boundsP0, abs (hx - lx), abs (hy - ly), abs (hz - lz))
             cont (Some(bounds))
         | Composite(s1, s2, _) ->
             let bounds = getBounds' s1 (fun s1b ->
@@ -205,7 +204,7 @@ let mkIntersection shape1 shape2 = Composite(shape1, shape2, Intersection)
 /// True, in the case that the ray hits the boundingbox (in the
 /// positive direction), else false.
 /// </returns>
-let hitsBounds (BB(p0, width, height, depth)) rayO rayD =
+let hitsBounds (p0, width, height, depth) rayO rayD =
     let (lx, ly, lz) = Point.getCoord p0
     let (hx, hy, hz) = Point.make (lx + width) (ly + height) (lz + depth)
                        |> Point.getCoord
