@@ -13,6 +13,20 @@ open Shape
 
 let mat = Material.make (Color.make 1. 0. 0.) 1.
 let texture = Texture.make (fun _ _ -> mat)
+let origo = Point.make 0. 0. 0.
+let origoShiftOne = Point.make 0. 1. 0.
+let sphereOrigo = Shape.mkSphere origo 1. texture
+let planeOrigo = Shape.mkPlane origo (Vector.make 0. 1. 0.) texture
+let planeOrigoShiftOne = Shape.mkPlane origoShiftOne (Vector.make 0. 1. 0.) texture
+let spherePlaneUnion = Shape.mkUnion sphereOrigo planeOrigo
+let sphereShiftOne = Shape.mkSphere origoShiftOne 1. texture
+let EPSILON = 1.0e-6
+
+let distCheck hitList distFloat index1 index2 =
+    let distBetweenHits = abs ((Shape.getHitDistance (List.item index1 hitList)) - (Shape.getHitDistance (List.item index2 hitList)))
+    let lessThanMax = distFloat + EPSILON > distBetweenHits
+    let greaterThanMin = distBetweenHits > distFloat - EPSILON
+    (lessThanMax && greaterThanMin)
 
 [<Fact>]
 let ``mkSphere should create a sphere with the specified arguments`` () =
@@ -184,3 +198,136 @@ let ``getHitMaterial should return the Material of a hitpoint ``() =
     let hitMaterial = Shape.getHitMaterial (List.head h)
     hitMaterial |> should be instanceOfType<Material>
     hitMaterial |> should equal mat
+
+[<Fact>]
+let ``mkUnion should create Union of two spheres`` () =
+    let union = Shape.mkUnion sphereOrigo sphereShiftOne
+    union |> should be instanceOfType<Shape>
+
+[<Fact>]
+let ``mkSubtraction should create Subtraction of two spheres`` () =
+    let subtraction = Shape.mkSubtraction sphereOrigo sphereShiftOne
+    subtraction |> should be instanceOfType<Shape>
+
+[<Fact>]
+let ``mkIntersection should create Intersection of two spheres`` () =
+    let intersection = Shape.mkIntersection sphereOrigo sphereShiftOne
+    intersection |> should be instanceOfType<Shape>
+
+[<Fact>]
+let ``hitFunction should return 2 hitpoints 3 units apart for deadcenter ray and a union of two adjacent spheres`` () =
+    let union = Shape.mkUnion sphereOrigo sphereShiftOne
+    let rayOrigin = Point.make 0. -3. 0.
+    let rayVector = Vector.make 0. 1. 0.
+    let ray = Ray.make rayOrigin rayVector
+    let hitList = Shape.hitFunction ray union
+
+    List.length hitList |> should equal 2
+    (distCheck hitList 3.0 1 0) |> should equal true
+
+[<Fact>]
+let ``hitFunction should return 4 hitpoints for offcenter ray and a union of two adjacent spheres`` () =
+    let union = Shape.mkUnion sphereOrigo sphereShiftOne
+    let rayOrigin = Point.make 0.9 -3. 0.
+    let rayVector = Vector.make 0. 1. 0.
+    let ray = Ray.make rayOrigin rayVector
+    let hitList = Shape.hitFunction ray union
+
+    List.length hitList |> should equal 4
+
+    (distCheck hitList 1.0 2 0) |> should equal true
+
+    (distCheck hitList 1.0 3 1) |> should equal true
+
+[<Fact>]
+let ``hitFunction should return 2 glancing hitpoints for offcenter ray and a union of two adjacent spheres`` () =
+    let union = Shape.mkUnion sphereOrigo sphereShiftOne
+    let rayOrigin = Point.make 1.0 -3. 0.
+    let rayVector = Vector.make 0. 1. 0.
+    let ray = Ray.make rayOrigin rayVector
+    let hitList = Shape.hitFunction ray union
+
+    List.length hitList |> should equal 2
+
+    (distCheck hitList 1.0 0 1) |> should equal true
+
+[<Fact>]
+let ``hitFunction should return 2 hitpoints for ray which hits shape1 in a union of two adjacent spheres`` () =
+    let union = Shape.mkUnion sphereOrigo sphereShiftOne
+    let rayOrigin = Point.make 2. -0.5 0.
+    let rayVector = Vector.make -1. 0. 0.
+    let ray = Ray.make rayOrigin rayVector
+    let hitList = Shape.hitFunction ray union
+
+    List.length hitList |> should equal 2
+
+[<Fact>]
+let ``hitFunction returns 2 hitpoints for ray which hits shape2`` () =
+    let rayOrigin = Point.make 2. 1.5 0.
+    let rayVector = Vector.make -1. 0. 0.
+    let ray = Ray.make rayOrigin rayVector
+    let hitList = Shape.hitFunction ray sphereShiftOne
+
+    List.length hitList |> should equal 2
+
+[<Fact>]
+let ``hitFunction should return 2 hitpoints for ray which hits shape2 in a union of two adjacent spheres`` () =
+    let union = Shape.mkUnion sphereOrigo sphereShiftOne
+    let rayOrigin = Point.make 2. 1.5 0.
+    let rayVector = Vector.make -1. 0. 0.
+    let ray = Ray.make rayOrigin rayVector
+    let hitList = Shape.hitFunction ray union
+
+    List.length hitList |> should equal 2
+
+[<Fact>]
+let ``hitFunction should return 2 hitpoints for ray which hits deadcenter in a union of sphere and plane`` () =
+    let rayOrigin = Point.make 0. -3. 0.
+    let rayVector = Vector.make 0. 1. 0.
+    let ray = Ray.make rayOrigin rayVector
+    let hitList = Shape.hitFunction ray spherePlaneUnion
+
+    List.length hitList |> should equal 2
+
+    (distCheck hitList 2.0 1 0) |> should equal true
+
+[<Fact>]
+let ``hitFunction should return 3 hitpoints for ray which hits sphere off-center in a union of sphere and plane`` () =
+    let union = Shape.mkUnion sphereOrigo planeOrigoShiftOne
+    let rayOrigin = Point.make 0.9 -3. 0.
+    let rayVector = Vector.make 0. 1. 0.
+    let ray = Ray.make rayOrigin rayVector
+    let hitList = Shape.hitFunction ray union
+
+    List.length hitList |> should equal 3
+
+[<Fact>]
+let ``hitFunction should return 2 hitpoints for ray which hits sphere glancingly in a union of sphere and plane`` () =
+    let union = Shape.mkUnion sphereOrigo planeOrigoShiftOne
+    let rayOrigin = Point.make 1.0 -3. 0.
+    let rayVector = Vector.make 0. 1. 0.
+    let ray = Ray.make rayOrigin rayVector
+    let hitList = Shape.hitFunction ray union
+
+    List.length hitList |> should equal 2
+
+    (distCheck hitList 1.0 0 1) |> should equal true
+
+[<Fact>]
+let ``getBounds returns the bounds of a shape as a quadruplet`` () =
+    let bounds = Shape.getBounds sphereShiftOne
+
+    match bounds with
+    | Some((P0, width, height, depth)) ->
+        P0     |> should equal (Point.make -1. 0. -1.)
+        width  |> should equal 2.
+        height |> should equal 2.
+        depth  |> should equal 2.
+    | None -> bounds.IsNone |> should be False // fail!
+
+[<Fact>]
+let ``getBounds returns None when the shape is a plane`` () =
+    let bounds = Shape.getBounds planeOrigo
+
+    bounds.IsSome |> should be False
+    bounds.IsNone |> should be True // is obvious at this point
