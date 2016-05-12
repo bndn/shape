@@ -526,6 +526,37 @@ let rec intersectionHitFunction ray hitTupleList hitList inside =
         hitList
 
 /// <summary>
+/// Hitfunction specific to the Subtraction composite.
+/// </summary>
+/// <param name="ray"> The ray to check for hits.</param>
+/// <param name="hitTupleList"> A list containing triples of the type (id,shape,hit).</param>
+/// <param name="hitList"> An empty list, acting as accumulator, to which the hits of the union are added.</param>
+/// <returns>
+/// A list of hitpoints.
+/// </returns>
+let rec subtractionHitFunction ray hitTupleList hitList inSubtraction =
+    match hitTupleList with
+    | (id1,s,h) :: hitTupleList when isOrthogonal ray (getHitNormal h) || shapeNonSolid ray h s id ->
+        if not inSubtraction && id1 = 1
+        then subtractionHitFunction ray hitTupleList (h :: hitList) inSubtraction
+        else subtractionHitFunction ray hitTupleList hitList inSubtraction
+    | (id1,s1,h1) :: (id2,s2,h2) :: hitTupleList when id1 = id2 ->
+        if not inSubtraction
+        then subtractionHitFunction ray hitTupleList (h1 :: h2 :: hitList) false
+        else subtractionHitFunction ray hitTupleList hitList inSubtraction
+    | (id1,s1,h1) :: (id2,s2,h2) :: hitTupleList when id1 <> id2 ->
+        match inSubtraction with
+        | true when id1 = 1 -> subtractionHitFunction ray hitTupleList hitList false
+        | true when id1 = 2 -> subtractionHitFunction ray hitTupleList (h2 :: hitList) false
+        | false when id1 = 1 -> subtractionHitFunction ray hitTupleList (h2 :: h1 :: hitList) (not (isOrthogonal ray (getHitNormal h2) || shapeNonSolid ray h2 s2 id))
+        | false when id1 = 2 -> subtractionHitFunction ray hitTupleList hitList true
+    | (id,s,h) :: hitTupleList ->
+        if inSubtraction
+        then hitList
+        else (h :: hitList)
+    | [] -> hitList
+
+/// <summary>
 /// Shoot a ray, and check if it hits the specificed shape.
 /// Returns a hitpoint for each point on the shape that
 /// was hit, as a list.
@@ -637,7 +668,7 @@ let rec hitFunction ray shape =
         | Union ->
             unionHitFunction ray hitTupleList []
         | Subtraction ->
-            failwith "Subtraction is not implemented yet"
+            subtractionHitFunction ray hitTupleList [] false
         | Intersection ->
             intersectionHitFunction ray hitTupleList [] false
     | _ ->
