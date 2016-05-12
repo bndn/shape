@@ -281,7 +281,7 @@ let ``hitFunction should return 2 hitpoints for ray which hits shape2 in a union
     List.length hitList |> should equal 2
 
 [<Fact>]
-let ```hitFunction should return 2 hitpoints for ray which hits deadcenter in a union of sphere and plane`` () =
+let ``hitFunction should return 2 hitpoints for ray which hits deadcenter in a union of sphere and plane`` () =
     let rayOrigin = Point.make 0. -3. 0.
     let rayVector = Vector.make 0. 1. 0.
     let ray = Ray.make rayOrigin rayVector
@@ -292,7 +292,7 @@ let ```hitFunction should return 2 hitpoints for ray which hits deadcenter in a 
     (distCheck hitList 2.0 1 0) |> should equal true
 
 [<Fact>]
-let ```hitFunction should return 3 hitpoints for ray which hits sphere off-center in a union of sphere and plane`` () =
+let ``hitFunction should return 3 hitpoints for ray which hits sphere off-center in a union of sphere and plane`` () =
     let union = Shape.mkUnion sphereOrigo planeOrigoShiftOne
     let rayOrigin = Point.make 0.9 -3. 0.
     let rayVector = Vector.make 0. 1. 0.
@@ -302,7 +302,7 @@ let ```hitFunction should return 3 hitpoints for ray which hits sphere off-cente
     List.length hitList |> should equal 3
 
 [<Fact>]
-let ```hitFunction should return 2 hitpoints for ray which hits sphere glancingly in a union of sphere and plane`` () =
+let ``hitFunction should return 2 hitpoints for ray which hits sphere glancingly in a union of sphere and plane`` () =
     let union = Shape.mkUnion sphereOrigo planeOrigoShiftOne
     let rayOrigin = Point.make 1.0 -3. 0.
     let rayVector = Vector.make 0. 1. 0.
@@ -312,3 +312,22 @@ let ```hitFunction should return 2 hitpoints for ray which hits sphere glancingl
     List.length hitList |> should equal 2
 
     (distCheck hitList 1.0 0 1) |> should equal true
+
+[<Fact>]
+let ``getBounds returns the bounds of a shape as a quadruplet`` () =
+    let bounds = Shape.getBounds sphereShiftOne
+
+    match bounds with
+    | Some((P0, width, height, depth)) ->
+        P0     |> should equal (Point.make -1. 0. -1.)
+        width  |> should equal 2.
+        height |> should equal 2.
+        depth  |> should equal 2.
+    | None -> bounds.IsNone |> should be False // fail!
+
+[<Fact>]
+let ``getBounds returns None when the shape is a plane`` () =
+    let bounds = Shape.getBounds planeOrigo
+
+    bounds.IsSome |> should be False
+    bounds.IsNone |> should be True // is obvious at this point

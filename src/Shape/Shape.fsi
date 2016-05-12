@@ -9,6 +9,8 @@ open Vector
 
 type Shape
 
+type Bounds = Point * float * float * float
+
 type Hitpoint
 
 exception NonPositiveShapeSizeException
@@ -43,6 +45,14 @@ val getHitNormal : hp:Hitpoint -> Vector
 /// <param name=hp>The hitpoint on the shape to get the material of.</param>
 /// <returns>The material on the shape at the hitpoint.</returns>
 val getHitMaterial : hp:Hitpoint -> Material
+
+/// <summary>
+/// Get the bounds of a shape, consisting of a point (P0), the width
+/// of the bounds, the height of the bounds and the depth of the bounds.
+/// </summary>
+/// <param name=s>The shape to get the bounds of.</param>
+/// <returns>The bounds of a shape.</returns>
+val getBounds : s:Shape -> Bounds option
 
 /// <summary>
 /// Make a plane with a point of origin (affects the texture mapping),
