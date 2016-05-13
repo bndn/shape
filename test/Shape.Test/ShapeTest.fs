@@ -17,6 +17,7 @@ let origo = Point.make 0. 0. 0.
 let origoShiftOne = Point.make 0. 1. 0.
 let sphereOrigo = Shape.mkSphere origo 1. texture
 let planeOrigo = Shape.mkPlane origo (Vector.make 0. 1. 0.) texture
+let hollowCylinderOrigo = Shape.mkHollowCylinder origo 1. 2. texture
 let planeOrigoShiftOne = Shape.mkPlane origoShiftOne (Vector.make 0. 1. 0.) texture
 let spherePlaneUnion = Shape.mkUnion sphereOrigo planeOrigo
 let sphereShiftOne = Shape.mkSphere origoShiftOne 1. texture
@@ -331,3 +332,58 @@ let ``getBounds returns None when the shape is a plane`` () =
 
     bounds.IsSome |> should be False
     bounds.IsNone |> should be True // is obvious at this point
+
+[<Fact>]
+let ``hitFunction should return 2 hitpoints for ray which hits HollowCylinder`` () =
+    let rayOrigin = Point.make -3. 1. 0.
+    let rayVector = Vector.make 1. 0. 0.
+    let ray = Ray.make rayOrigin rayVector
+    let hitList = Shape.hitFunction ray hollowCylinderOrigo
+ 
+    List.length hitList |> should equal 2
+
+[<Fact>]
+let ``hitFunction should return 0 hitpoints for ray which goes up the middle of HollowCylinder`` () =
+    let rayOrigin = Point.make 0. -3. 0.
+    let rayVector = Vector.make 0. 1. 0.
+    let ray = Ray.make rayOrigin rayVector
+    let hitList = Shape.hitFunction ray hollowCylinderOrigo
+ 
+    List.length hitList |> should equal 0
+
+[<Fact>]
+let ``hitFunction should return 1 hitpoints for ray which glancingly hits HollowCylinder`` () =
+    let rayOrigin = Point.make 1. 1. -2.
+    let rayVector = Vector.make 0. 0. 1.
+    let ray = Ray.make rayOrigin rayVector
+    let hitList = Shape.hitFunction ray hollowCylinderOrigo
+ 
+    List.length hitList |> should equal 1
+
+[<Fact>]
+let ``hitFunction should return 1 hitpoints for ray which goes through and out the top of HollowCylinder`` () =
+    let rayOrigin = Point.make -1.5 0. 0.
+    let rayVector = Vector.make 1. 2. 0.
+    let ray = Ray.make rayOrigin rayVector
+    let hitList = Shape.hitFunction ray hollowCylinderOrigo
+ 
+    List.length hitList |> should equal 1
+
+[<Fact>]
+let ``hitFunction should return 0 hitpoints for ray which goes over HollowCylinder`` () =
+    let rayOrigin = Point.make -2. 3. 0.
+    let rayVector = Vector.make 1. 0. 0.
+    let ray = Ray.make rayOrigin rayVector
+    let hitList = Shape.hitFunction ray hollowCylinderOrigo
+ 
+    List.length hitList |> should equal 0
+
+[<Fact>]
+let ``hitFunction should return 0 hitpoints for ray which goes under HollowCylinder`` () = 
+    let rayOrigin = Point.make -2. -0.5 0.
+    let rayVector = Vector.make 1. 0. 0.
+    let ray = Ray.make rayOrigin rayVector
+    let hitList = Shape.hitFunction ray hollowCylinderOrigo
+ 
+    List.length hitList |> should equal 0
+
