@@ -93,6 +93,7 @@ let combineBounds = function
 /// <param name=s>The shape to get the bounds of.</param>
 /// <returns>The bounds of the shape.</returns>
 let getBounds shape =
+    let e = EPSILON // local alias
     let rec getBounds' shape cont =
         match shape with
         | Plane(_, _, _)       -> None
@@ -103,17 +104,20 @@ let getBounds shape =
             cont (Some(bounds))
         | Sphere(c, r, _)      ->
             let cx, cy, cz = Point.getCoord c
-            let boundsP0 = Point.make (cx - r) (cy - r) (cz - r)
-            let bounds = (boundsP0, r * 2., r * 2., r * 2.)
+            let boundsP0 = Point.make (cx - r - e) (cy - r - e) (cz - r - e)
+            let bounds = (boundsP0, r * 2. + e, r * 2. + e, r * 2. + e)
             cont (Some(bounds))
         | Triangle(a, b, c, _) ->
             let (ax, ay, az), (bx, by, bz), (cx, cy, cz) =
                 Point.getCoord a, Point.getCoord b, Point.getCoord c
 
-            let (lx, ly, lz) = min ax (min bx cx), min ay (min by cy), min az (min bz cz)
-            let (hx, hy, hz) = max ax (max bx cx), max ay (max by cy), max az (max bz cz)
-            let boundsP0 = Point.make lx ly lz
-            let bounds = (boundsP0, abs (hx - lx), abs (hy - ly), abs (hz - lz))
+            let lx, ly, lz = min ax (min bx cx), min ay (min by cy), min az (min bz cz)
+            let hx, hy, hz = max ax (max bx cx), max ay (max by cy), max az (max bz cz)
+            let boundsP0 = Point.make (lx - e) (ly - e) (lz - e)
+            let bounds = (boundsP0,
+                          abs (hx - lx) + e, // width
+                          abs (hy - ly) + e, // height
+                          abs (hz - lz) + e) // depth
             cont (Some(bounds))
         | Composite(s1, s2, _) ->
             let bounds = getBounds' s1 (fun s1b ->
@@ -232,19 +236,19 @@ let mkIntersection shape1 shape2 = Composite(shape1, shape2, Intersection)
 /// positive direction), else false.
 /// </returns>
 let hitsBounds (p0, width, height, depth) rayO rayD =
-    let (lx, ly, lz) = Point.getCoord p0
-    let (hx, hy, hz) = Point.make (lx + width) (ly + height) (lz + depth)
-                       |> Point.getCoord
+    let lx, ly, lz = Point.getCoord p0
+    let hx, hy, hz = Point.make (lx + width) (ly + height) (lz + depth)
+                     |> Point.getCoord
 
-    let (ox, oy, oz) = Point.getCoord rayO
-    let (dx, dy, dz) = Vector.getCoord rayD
-    let (idx, idy, idz) = 1. / dx, 1. / dy, 1. / dz // inverse ray direction
+    let ox, oy, oz = Point.getCoord rayO
+    let dx, dy, dz = Vector.getCoord rayD
+    let idx, idy, idz = 1. / dx, 1. / dy, 1. / dz // inverse ray direction
 
-    let (txmin, txmax) =
+    let txmin, txmax =
         if idx < 0.
         then ((hx - ox) * idx), ((lx - ox) * idx)
         else ((lx - ox) * idx), ((hx - ox) * idx)
-    let (tymin, tymax) =
+    let tymin, tymax =
         if idy < 0.
         then ((hy - oy) * idy), ((ly - oy) * idy)
         else ((ly - oy) * idy), ((hy - oy) * idy)
@@ -254,7 +258,7 @@ let hitsBounds (p0, width, height, depth) rayO rayD =
     let tmin = if tymin > txmin then tymin else txmin
     let tmax = if tymax < txmax then tymax else txmax
 
-    let (tzmin, tzmax) =
+    let tzmin, tzmax =
         if idz < 0.
         then ((hz - oz) * idz), ((lz - oz) * idz)
         else ((lz - oz) * idz), ((hz - oz) * idz)
