@@ -163,8 +163,7 @@ let mkSphere center radius texture =
 /// </param>
 /// <param name=radius>The radius of the cylinder.</param>
 /// <param name=height>
-/// The height of the cylinder. Can be negative, which will make
-/// the cylinder grow in the negative direction of the y-axis.
+/// The height of the cylinder.
 /// </param>
 /// <param name=t>The texture of the cylinder.</param>
 /// <returns>
@@ -172,7 +171,7 @@ let mkSphere center radius texture =
 /// a height and a texture.
 /// </returns>
 let mkHollowCylinder center radius height texture =
-    if radius <= 0. || height = 0. then raise NonPositiveShapeSizeException
+    if radius <= 0. || height <= 0. then raise NonPositiveShapeSizeException
     HollowCylinder(center, radius, height, texture)
 
 /// <summary>
@@ -388,7 +387,7 @@ let sphereDeterminer d center rayV rayO t =
 /// <param name=t>The texture for the cylinder.</param>
 /// <returns>
 /// A hitpoint for the cylinder, with a distance, the inverse vector
-/// (going outwards from the sphere surface) and the material for the
+/// (going outwards from the cylinder surface) and the material for the
 /// hitpoint.
 /// </returns>
 let cylinderDeterminer d center r h rayV rayO texture=
