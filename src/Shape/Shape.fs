@@ -96,6 +96,11 @@ let getBounds shape =
     let rec getBounds' shape cont =
         match shape with
         | Plane(_, _, _)       -> None
+        | HollowCylinder(c,r,h,_) ->
+            let cx, cy, cz = Point.getCoord c
+            let boundsP0 = Point.make (cx - r) (cy - r) (cz - r)
+            let bounds = (boundsP0, r * 2., h, r * 2.)
+            cont (Some(bounds))
         | Sphere(c, r, _)      ->
             let cx, cy, cz = Point.getCoord c
             let boundsP0 = Point.make (cx - r) (cy - r) (cz - r)
@@ -371,6 +376,31 @@ let sphereDeterminer d center rayV rayO t =
     Hit(d, n, material)
 
 /// <summary>
+/// Creates a hitpoint on a cylinder, given a distance, a ray direction and
+/// a ray origin.
+/// </summary>
+/// <param name=d>The distance between rayO and the cylinders's surface.</param>
+/// <param name=center>The center point of the cylinder.</param>
+/// <param name=rayV>The direction of the ray (vector).</param>
+/// <param name=rayO>The origin of the ray.</param>
+/// <param name=t>The texture for the cylinder.</param>
+/// <returns>
+/// A hitpoint for the cylinder, with a distance, the inverse vector
+/// (going outwards from the sphere surface) and the material for the
+/// hitpoint.
+/// </returns>
+let cylinderDeterminer d center rayV rayO texture=
+    let hitPoint = Point.move rayO (Vector.multScalar rayV d)
+    
+    let y = Point.getY hitPoint
+    let circleCenter = Point.move center (Vector.make 0. y 0.)
+    let normal = Point.distance circleCenter hitPoint
+
+    let material = Texture.getMaterial 0. 0. texture
+
+    Hit(d, normal, material)
+   
+/// <summary>
 /// A function for checking whether a specific hitpoint was on a non-solid shape.
 /// </summary>
 /// <remark> This is a helper function for the shapeNonSolid function, it's calculations only necessary if a union Composite is hit.
@@ -520,14 +550,18 @@ let rec hitFunction ray shape =
         let b = 2. * ((ox - x) * dx + (oz - z) * dz)
         let c = (ox - x)**2. + (oz - z)**2. - radius**2.
         let distances = distance a b c
+        let constrainedDistances = List.filter (fun dist ->
+            let hitPoint = Point.move rayOrigin (Vector.multScalar rayVector dist)
+            let y = Point.getY hitPoint
+            y < (height + EPSILON) && y > -EPSILON) distances
 
-        let material = Texture.getMaterial 0. 0. texture
-        match distances with
+        match constrainedDistances with
         | []         -> List.empty
-        | [hp]       -> [Hit(hp, Vector.make 1. 0. 0., material)]
-        | [hp1; hp2] -> [Hit(hp1, Vector.make 1. 0. 0., material);
-                         Hit(hp2, Vector.make 1. 0. 0., material)]
-        | _          -> failwith "Error: Hitting a cylinder more than two times!"
+        | [d]        -> [cylinderDeterminer d center rayVector rayOrigin texture]
+        | [d1; d2]   -> [cylinderDeterminer d1 center rayVector rayOrigin texture;
+                         cylinderDeterminer d2 center rayVector rayOrigin texture]
+        | _          -> failwith "Error: Hitting a sphere more than two times!"
+       
     | Triangle(a, b, c, t) ->
         let material =  Texture.getMaterial 0. 0. t
 
