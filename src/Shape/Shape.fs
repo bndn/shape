@@ -396,14 +396,14 @@ let cylinderDeterminer d center r h rayV rayO texture=
     
     let y = Point.getY hitPoint
     let circleCenter = Point.move center (Vector.make 0. y 0.)
-    let normal = Vector.make((Point.getX hitPoint) / r, 0, (Point.getZ hitPoint) / r)
+    let normal = Vector.make ((Point.getX hitPoint) / r) 0. ((Point.getZ hitPoint) / r)
     
     let phi' = atan2 (Vector.getX normal) (Vector.getZ normal)
-    phi = if phi' < 0
-            then phi' + (2 * Math.PI)
-            else phi'
+    let phi =  if phi' < 0.
+                then phi' + (2. * Math.PI)
+                else phi'
     
-    let u = phi / (2 * Math.PI)
+    let u = phi / (2. * Math.PI)
     let v = ((Point.getY hitPoint) / h) + 0.5
     
     let material = Texture.getMaterial u v texture
