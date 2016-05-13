@@ -562,7 +562,11 @@ let rec hitFunction ray shape =
         let constrainedDistances = List.filter (fun dist ->
             let hitPoint = Point.move rayOrigin (Vector.multScalar rayVector dist)
             let y = Point.getY hitPoint
-            y < (height + EPSILON) && y > -EPSILON) distances
+            if((((-1. * height) / 2) <= y) && (y <= (height / 2)))
+                then
+                    y < (height + EPSILON) && y > -EPSILON) distances
+                else
+                    []
 
         match constrainedDistances with
         | []         -> List.empty
