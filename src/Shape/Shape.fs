@@ -381,6 +381,8 @@ let sphereDeterminer d center rayV rayO t =
 /// </summary>
 /// <param name=d>The distance between rayO and the cylinders's surface.</param>
 /// <param name=center>The center point of the cylinder.</param>
+/// <param name=r>The radius of the cylinder.</param>
+/// <param name=h>The height of the cylinder.</param>
 /// <param name=rayV>The direction of the ray (vector).</param>
 /// <param name=rayO>The origin of the ray.</param>
 /// <param name=t>The texture for the cylinder.</param>
@@ -389,14 +391,22 @@ let sphereDeterminer d center rayV rayO t =
 /// (going outwards from the sphere surface) and the material for the
 /// hitpoint.
 /// </returns>
-let cylinderDeterminer d center rayV rayO texture=
+let cylinderDeterminer d center r h rayV rayO texture=
     let hitPoint = Point.move rayO (Vector.multScalar rayV d)
     
     let y = Point.getY hitPoint
     let circleCenter = Point.move center (Vector.make 0. y 0.)
-    let normal = Point.distance circleCenter hitPoint
-
-    let material = Texture.getMaterial 0. 0. texture
+    let normal = Vector.make((Point.getX hitPoint) / r, 0, (Point.getZ hitPoint) / r)
+    
+    let phi' = atan2 (Vector.getX normal) (Vector.getZ normal)
+    phi = if phi' < 0
+            then phi' + (2 * Math.PI)
+            else phi'
+    
+    let u = phi / (2 * Math.PI)
+    let v = ((Point.getY hitPoint) / h) + 0.5
+    
+    let material = Texture.getMaterial u v texture
 
     Hit(d, normal, material)
    
@@ -557,9 +567,9 @@ let rec hitFunction ray shape =
 
         match constrainedDistances with
         | []         -> List.empty
-        | [d]        -> [cylinderDeterminer d center rayVector rayOrigin texture]
-        | [d1; d2]   -> [cylinderDeterminer d1 center rayVector rayOrigin texture;
-                         cylinderDeterminer d2 center rayVector rayOrigin texture]
+        | [d]        -> [cylinderDeterminer d center radius height rayVector rayOrigin texture]
+        | [d1; d2]   -> [cylinderDeterminer d1 center radius height rayVector rayOrigin texture;
+                         cylinderDeterminer d2 center radius height rayVector rayOrigin texture]
         | _          -> failwith "Error: Hitting a sphere more than two times!"
        
     | Triangle(a, b, c, t) ->
