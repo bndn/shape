@@ -158,7 +158,7 @@ let mkSphere center radius texture =
 /// a height and a texture.
 /// </summary>
 /// <param name=center>
-/// The center point at the bottom (or top, if the height is negative)
+/// The center point at the bottom.
 /// of the cylinder.
 /// </param>
 /// <param name=radius>The radius of the cylinder.</param>
