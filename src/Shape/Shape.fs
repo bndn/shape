@@ -559,8 +559,11 @@ let rec hitFunction ray shape =
         let hitpoint = Point.move rayOrigin (Vector.multScalar rayVector t)
         let (hpx, _, hpz) = Point.getCoord hitpoint
 
-        let u = abs(hpx % 1.0)
-        let v = abs(hpz % 1.0)
+        let u = hpx % 1.0
+        let v = hpz % 1.0
+
+        let u = if hpx < 0. then 1. - u else u
+        let v = if hpz < 0. then 1. - v else v
 
         // gets material for the hit point
         let material = Texture.getMaterial u v texture
