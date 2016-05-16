@@ -335,6 +335,8 @@ let ``getBounds returns None when the shape is a plane`` () =
     let bounds = Shape.getBounds planeOrigo
 
     bounds.IsNone |> should be True
+    bounds.IsSome |> should be False
+    bounds.IsNone |> should be True // is obvious at this point
 
 [<Fact>]
 let ``hitFunction should return 2 hitpoints for ray which hits HollowCylinder`` () =
@@ -424,6 +426,51 @@ let ``hitFunction should return 0 hitpoints for ray which goes over HollowCylind
     List.length hitList |> should equal 0
 
 [<Fact>]
+let ``hitFunction should return 2 hitpoints 1 unit apart for deadcenter ray in subtraction of two adjacent spheres`` () =
+    let subtraction = Shape.mkSubtraction sphereOrigo sphereShiftOne
+    let rayOrigin = Point.make 0. -3. 0.
+    let rayVector = Vector.make 0. 1. 0.
+    let ray = Ray.make rayOrigin rayVector
+    let hitList = Shape.hitFunction ray subtraction
+
+    List.length hitList |> should equal 2
+
+    (distCheck hitList 1.0 0 1) |> should equal true
+
+[<Fact>]
+let ``hitFunction should return 1 hitpoint for glancing ray in subtraction of two adjacent spheres`` () =
+    let subtraction = Shape.mkSubtraction sphereOrigo sphereShiftOne
+    let rayOrigin = Point.make 1. -3. 0.
+    let rayVector = Vector.make 0. 1. 0.
+    let ray = Ray.make rayOrigin rayVector
+    let hitList = Shape.hitFunction ray subtraction
+
+    List.length hitList |> should equal 1
+
+[<Fact>]
+let ``hitFunction should return 3 hitpoints 1 unit apart for ray centered in sphere1, glancing sphere2 in subtraction of two adjacent spheres`` () =
+    let subtraction = Shape.mkSubtraction sphereOrigo sphereShiftOne
+    let rayOrigin = Point.make -2. 0. 0.
+    let rayVector = Vector.make 2. 0. 0.
+    let ray = Ray.make rayOrigin rayVector
+    let hitList = Shape.hitFunction ray subtraction
+
+    List.length hitList |> should equal 3
+
+    (distCheck hitList 1.0 0 1) |> should equal true
+    (distCheck hitList 1.0 1 2) |> should equal true
+
+[<Fact>]
+let ``hitFunction should return 0 hitpoints for ray centered in sphere2, glancing sphere1 in subtraction of two adjacent spheres`` () =
+    let subtraction = Shape.mkSubtraction sphereOrigo sphereShiftOne
+    let rayOrigin = Point.make -2. 1. 0.
+    let rayVector = Vector.make 2. 0. 0.
+    let ray = Ray.make rayOrigin rayVector
+    let hitList = Shape.hitFunction ray subtraction
+
+    List.length hitList |> should equal 0
+
+[<Fact>]
 let ``hitFunction should return 0 hitpoints for ray which goes under HollowCylinder`` () =
     let rayOrigin = Point.make -2. -0.5 0.
     let rayVector = Vector.make 1. 0. 0.
@@ -433,11 +480,34 @@ let ``hitFunction should return 0 hitpoints for ray which goes under HollowCylin
     List.length hitList |> should equal 0
 
 [<Fact>]
-let ```hitFunction should return 1 hitpoints for ray which hits plane outside of sphere in an intersection of sphere and plane`` () =
+let ```hitFunction should return 0 hitpoints for ray which hits plane outside of sphere in an intersection of sphere and plane`` () =
     let intersection = Shape.mkIntersection sphereOrigo planeOrigo
     let rayOrigin = Point.make 1.0 -3. 1.
     let rayVector = Vector.make 0. 1. 0.
     let ray = Ray.make rayOrigin rayVector
     let hitList = Shape.hitFunction ray intersection
+    
+    List.length hitList |> should equal 0
+
+[<Fact>]
+let ``hitFunction should return 3 hitpoints 1 units apart for ray deadcenter in subtraction of a sphere and plane`` () =
+    let subtraction = Shape.mkSubtraction sphereOrigo planeOrigo
+    let rayOrigin = Point.make 0. -3. 0.
+    let rayVector = Vector.make 0. 1. 0.
+    let ray = Ray.make rayOrigin rayVector
+    let hitList = Shape.hitFunction ray subtraction
+
+    List.length hitList |> should equal 3
+
+    (distCheck hitList 1.0 0 1) |> should equal true
+    (distCheck hitList 1.0 1 2) |> should equal true
+
+[<Fact>]
+let ``hitFunction should return 0 hitpoints for ray deadcenter in subtraction of a plane and sphere`` () =
+    let subtraction = Shape.mkSubtraction planeOrigo sphereOrigo
+    let rayOrigin = Point.make 0. -3. 0.
+    let rayVector = Vector.make 0. 1. 0.
+    let ray = Ray.make rayOrigin rayVector
+    let hitList = Shape.hitFunction ray subtraction
 
     List.length hitList |> should equal 0
