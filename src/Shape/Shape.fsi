@@ -70,6 +70,19 @@ val getBounds : s:Shape -> Bounds option
 val mkPlane : p0:Point -> up:Vector -> t:Texture -> Shape
 
 /// <summary>
+/// Make a disc with a center point, an upvector, a radius and a texture.
+/// </summary>
+/// <param name=p0>The center point of the disc.</param>
+/// <param name=up>The upvector of the disc.</param>
+/// <param name=radius>The radius of the disc.</param>
+/// <param name=t>The texture of the disc.</param>
+/// <returns>
+/// A disc object facing in the direction of the upvector, with a center
+/// point, a radius and a texture.
+/// </returns>
+val mkDisc : p0:Point -> radius:float -> t:Texture -> Shape
+
+/// <summary>
 /// Make a sphere with a point of origin, a radius and a texture.
 /// </summary>
 /// <param name=center>The center point of the sphere.</param>

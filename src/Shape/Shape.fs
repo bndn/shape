@@ -21,6 +21,7 @@ type Bounds = Point * float * float * float
 
 type Shape =
     | Plane of Point * Vector * Texture
+    | Disc of Point * float * Texture
     | Sphere of Point * float * Texture
     | HollowCylinder of Point * float * float * Texture
     | Triangle of Point * Point * Point * Texture
@@ -73,6 +74,7 @@ let combineBounds = function
     | (Some bound, None) -> Some bound
     | (None, Some bound) -> Some bound
     | (Some (b1, b1w, b1h, b1d), Some (b2, b2w, b2h, b2d)) ->
+        let e = EPSILON // local alias
         // get coordinates of bounding boxes' starting points
         let (b1x, b1y, b1z), (b2x, b2y, b2z) =
             Point.getCoord b1, Point.getCoord b2
@@ -83,8 +85,8 @@ let combineBounds = function
 
         let (lx, ly, lz) = min b1x b2x, min b1y b2y, min b1z b2z
         let (hx, hy, hz) = max b1x2 b2x2, max b1y2 b2y2, max b1z2 b2z2
-        let boundsP0 = Point.make lx ly lz
-        let bounds = (boundsP0, abs (hx - lx), abs (hy - ly), abs (hz - lz))
+        let boundsP0 = Point.make (lx - e) (ly - e) (lz - e)
+        let bounds = (boundsP0, abs (hx - lx) + e, abs (hy - ly) + e, abs (hz - lz) + e)
         Some bounds
 
 /// <summary>
@@ -97,10 +99,15 @@ let getBounds shape =
     let rec getBounds' shape cont =
         match shape with
         | Plane(_, _, _)       -> None
+        | Disc(c, r, _) ->
+            let cx, cy, cz = Point.getCoord c
+            let boundsP0 = Point.make (cx - r - e) (cy - r - e) (cz - e)
+            let bounds = (boundsP0, r * 2. + e, r * 2. + e, e * 2.)
+            cont (Some(bounds))
         | HollowCylinder(c,r,h,_) ->
             let cx, cy, cz = Point.getCoord c
-            let boundsP0 = Point.make (cx - r) (cy - r) (cz - r)
-            let bounds = (boundsP0, r * 2., h, r * 2.)
+            let boundsP0 = Point.make (cx - r - e) (cy - r - e) (cz - r - e)
+            let bounds = (boundsP0, r * 2. + e, h + e, r * 2. + e)
             cont (Some(bounds))
         | Sphere(c, r, _)      ->
             let cx, cy, cz = Point.getCoord c
@@ -143,6 +150,21 @@ let mkPlane p0 up texture =
     if Vector.magnitude up = 0.
     then failwith "Attempting to create a plane with a 0-vector as the normal"
     Plane(p0, up, texture)
+
+/// <summary>
+/// Make a disc with a center point, an upvector, a radius and a texture.
+/// </summary>
+/// <param name=p0>The center point of the disc.</param>
+/// <param name=radius>The radius of the disc.</param>
+/// <param name=t>The texture of the disc.</param>
+/// <returns>
+/// A disc object facing in the direction of the upvector, with a center
+/// point, a radius and a texture.
+/// </returns>
+let mkDisc p0 radius t =
+    if radius <= 0.
+    then raise NonPositiveShapeSizeException
+    Disc(p0, radius, t)
 
 /// <summary>
 /// Make a sphere with a point of origin, a radius and a texture.
@@ -379,6 +401,45 @@ let sphereDeterminer d center rayV rayO t =
     Hit(d, n, material)
 
 /// <summary>
+/// Determines whether a hitpoint is within the disc area and returns the Hit if it is,
+/// or nothing if it does not.
+/// </summary>
+/// <param name=d>The distance from the ray origin point to the hit point</params>
+/// <param name=hit>The hitpoint on the disc plane in question.</params>
+/// <param name=normal>The normal of the disc.</params>
+/// <param name=r>The radius of the disc.</params>
+/// <param name=p0>The center point of the disc.</params>
+/// <param name=t>The texture of the disc.</params>
+/// <returns>
+/// A hitpoint list, which either contains a single hitpoint or nothing.
+/// </returns>
+let discDeterminer d hit normal r p0 t  =
+    let xCoord = Point.getX hit - Point.getX p0
+    let yCoord = Point.getY hit - Point.getY p0
+
+    if ((xCoord**2.) + (yCoord**2.)) <= r**2.
+    then
+        let u = (xCoord + r) / (2. * r)
+        let v = (yCoord + r) / (2. * r)
+        let material = Texture.getMaterial u v t
+        [Hit(d, normal, material)]
+    else
+        List.empty
+
+let rayPlaneHit rayO rayD p0 normal =
+    let rdn = rayD * normal // ray and normal dotproduct
+    // If the ray and normals' dotproducts are too close, we do not
+    // want to render the hit. We render both sides of the plane.
+    if rdn < EPSILON && rdn > -EPSILON then None else
+
+    let t = ((Point.distance rayO p0) * normal) / rdn
+    // The hit is behind the ray origin
+    if t < 0. then None else
+
+    let hitpoint = Point.move rayO (Vector.multScalar rayD t)
+    Some((t, hitpoint))
+
+/// <summary>
 /// Creates a hitpoint on a cylinder, given a distance, a ray direction and
 /// a ray origin.
 /// </summary>
@@ -396,23 +457,23 @@ let sphereDeterminer d center rayV rayO t =
 /// </returns>
 let cylinderDeterminer d center r h rayV rayO texture=
     let hitPoint = Point.move rayO (Vector.multScalar rayV d)
-    
+
     let y = Point.getY hitPoint
     let circleCenter = Point.move center (Vector.make 0. y 0.)
     let normal = Vector.make ((Point.getX hitPoint) / r) 0. ((Point.getZ hitPoint) / r)
-    
+
     let phi' = atan2 (Vector.getX normal) (Vector.getZ normal)
     let phi =  if phi' < 0.
                 then phi' + (2. * Math.PI)
                 else phi'
-    
+
     let u = phi / (2. * Math.PI)
     let v = ((Point.getY hitPoint) / h) + 0.5
-    
+
     let material = Texture.getMaterial u v texture
 
     Hit(d, normal, material)
-   
+
 /// <summary>
 /// A function for checking whether a specific hitpoint was on a non-solid shape.
 /// </summary>
@@ -448,7 +509,6 @@ let rec hitInNonSolid point shape c =
             hitInNonSolid point shape2 (fun s2 ->
                 c (s1 || s2)))
     | _ -> false
-
 
 /// <summary>
 /// A function for checking whether a specific hitpoint was on a non-solid shape.
@@ -488,7 +548,7 @@ let rec shapeNonSolid ray hit shape c =
 /// </returns>
 let rec unionHitFunction ray hitTupleList hitList =
     match hitTupleList with
-    | (_,s,h) :: hitTupleList when isOrthogonal ray (getHitNormal h) || shapeNonSolid ray h s id -> 
+    | (_,s,h) :: hitTupleList when isOrthogonal ray (getHitNormal h) || shapeNonSolid ray h s id ->
         unionHitFunction ray hitTupleList (h :: hitList)
     | (id1,s1,h1) :: (id2,s2,h2) :: hitTupleList when id1 = id2 ->
         unionHitFunction ray hitTupleList (h1 :: h2 :: hitList)
@@ -511,10 +571,10 @@ let rec unionHitFunction ray hitTupleList hitList =
 /// </returns>
 let rec intersectionHitFunction ray hitTupleList hitList inside =
     match hitTupleList with
-    | (_,s,h) :: hitTupleList when isOrthogonal ray (getHitNormal h) || shapeNonSolid ray h s id -> 
+    | (_,s,h) :: hitTupleList when isOrthogonal ray (getHitNormal h) || shapeNonSolid ray h s id ->
         if inside then intersectionHitFunction ray hitTupleList (h :: hitList) true
         else intersectionHitFunction ray hitTupleList hitList false
-    | (id1,s1,h1) :: (id2,s2,h2) :: hitTupleList when id1 = id2 -> 
+    | (id1,s1,h1) :: (id2,s2,h2) :: hitTupleList when id1 = id2 ->
         if inside then intersectionHitFunction ray hitTupleList (h1 :: h2 :: hitList) true
         else intersectionHitFunction ray hitTupleList hitList false
     | (id1,s1,h1) :: (id2,s2,h2) :: hitTupleList when id1 <> id2 ->
@@ -575,19 +635,12 @@ let rec hitFunction ray shape =
     if not withinBounds then List.empty else
     match shape with
     | Plane(p0, normal, texture) ->
-        let rdn = rayVector * normal // ray and normal dotproduct
-        // If the ray and normals' dotproducts are too close, we do not
-        // want to render the hit. We render both sides of the plane.
-        if rdn < EPSILON && rdn > -EPSILON then List.empty else
-
-        // hit distance traveled
-        let t = ((Point.distance rayOrigin p0) * normal) / rdn
-        // The hit is behind the camera
-        if t < 0. then List.empty else
-
         // get hit point and its coordinate on the infinite plane
         // TODO: we do not take the y-axis into account (maybe fix later)
-        let hitpoint = Point.move rayOrigin (Vector.multScalar rayVector t)
+        let rph = rayPlaneHit rayOrigin rayVector p0 normal
+        if rph.IsNone then List.empty else
+        let t, hitpoint = rph.Value
+
         let (hpx, _, hpz) = Point.getCoord hitpoint
 
         let u = abs(hpx) % 1.0
@@ -596,9 +649,26 @@ let rec hitFunction ray shape =
         let u = if hpx < 0. then 1. - u else u
         let v = if hpz < 0. then 1. - v else v
 
+        // if we hit the backside, return the inverse normal
+        let normal =
+            if Vector.dotProduct rayVector normal > 0.
+            then -normal else normal
+
         // gets material for the hit point
         let material = Texture.getMaterial u v texture
         [Hit(t, normal, material)]
+    | Disc(p0, radius, texture) ->
+        let up = Vector.make 0. 0. 1.
+        let rph = rayPlaneHit rayOrigin rayVector p0 up
+        if rph.IsNone then List.empty else
+        let t, hitpoint = rph.Value
+
+        // if we hit the backside, return the inverse normal
+        let up =
+            if Vector.dotProduct rayVector up > 0.
+            then -up else up
+
+        discDeterminer t hitpoint up radius p0 texture
     | Sphere(center, radius, texture) ->
         let (dx, dy, dz) = Vector.getCoord rayVector
         let (ox, oy, oz) = Point.getCoord rayOrigin
@@ -628,14 +698,13 @@ let rec hitFunction ray shape =
             let y = Point.getY hitPoint
             y < (height + EPSILON) && y > -EPSILON) distances
 
-
         match constrainedDistances with
         | []         -> List.empty
         | [d]        -> [cylinderDeterminer d center radius height rayVector rayOrigin texture]
         | [d1; d2]   -> [cylinderDeterminer d1 center radius height rayVector rayOrigin texture;
                          cylinderDeterminer d2 center radius height rayVector rayOrigin texture]
         | _          -> failwith "Error: Hitting a sphere more than two times!"
-       
+
     | Triangle(a, b, c, t) ->
         let material =  Texture.getMaterial 0. 0. t
 
