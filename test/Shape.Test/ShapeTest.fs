@@ -11,6 +11,9 @@ open Texture
 open Point
 open Shape
 
+[<Literal>]
+let Epsilon = 10e-6
+
 let mat = Material.make (Color.make 1. 0. 0.) 1.
 let texture = Texture.make (fun _ _ -> mat)
 let origo = Point.make 0. 0. 0.
@@ -21,12 +24,11 @@ let hollowCylinderOrigo = Shape.mkHollowCylinder origo 1. 2. texture
 let planeOrigoShiftOne = Shape.mkPlane origoShiftOne (Vector.make 0. 1. 0.) texture
 let spherePlaneUnion = Shape.mkUnion sphereOrigo planeOrigo
 let sphereShiftOne = Shape.mkSphere origoShiftOne 1. texture
-let EPSILON = 1.0e-6
 
 let distCheck hitList distFloat index1 index2 =
     let distBetweenHits = abs ((Shape.getHitDistance (List.item index1 hitList)) - (Shape.getHitDistance (List.item index2 hitList)))
-    let lessThanMax = distFloat + EPSILON > distBetweenHits
-    let greaterThanMin = distBetweenHits > distFloat - EPSILON
+    let lessThanMax = distFloat + Epsilon > distBetweenHits
+    let greaterThanMin = distBetweenHits > distFloat - Epsilon
     (lessThanMax && greaterThanMin)
 
 [<Fact>]
@@ -319,19 +321,20 @@ let ``getBounds returns the bounds of a shape as a quadruplet`` () =
     let bounds = Shape.getBounds sphereShiftOne
 
     match bounds with
-    | Some((P0, width, height, depth)) ->
-        P0     |> should equal (Point.make -1. 0. -1.)
-        width  |> should equal 2.
-        height |> should equal 2.
-        depth  |> should equal 2.
+    | Some((p, width, height, depth)) ->
+        Point.getX p |> should (equalWithin Epsilon) -1.
+        Point.getY p |> should (equalWithin Epsilon) 0.
+        Point.getZ p |> should (equalWithin Epsilon) -1.
+        width        |> should (equalWithin Epsilon) 2.
+        height       |> should (equalWithin Epsilon) 2.
+        depth        |> should (equalWithin Epsilon) 2.
     | None -> bounds.IsNone |> should be False // fail!
 
 [<Fact>]
 let ``getBounds returns None when the shape is a plane`` () =
     let bounds = Shape.getBounds planeOrigo
 
-    bounds.IsSome |> should be False
-    bounds.IsNone |> should be True // is obvious at this point
+    bounds.IsNone |> should be True
 
 [<Fact>]
 let ``hitFunction should return 2 hitpoints for ray which hits HollowCylinder`` () =
@@ -339,7 +342,7 @@ let ``hitFunction should return 2 hitpoints for ray which hits HollowCylinder`` 
     let rayVector = Vector.make 1. 0. 0.
     let ray = Ray.make rayOrigin rayVector
     let hitList = Shape.hitFunction ray hollowCylinderOrigo
- 
+
     List.length hitList |> should equal 2
 
 [<Fact>]
@@ -348,7 +351,7 @@ let ``hitFunction should return 0 hitpoints for ray which goes up the middle of 
     let rayVector = Vector.make 0. 1. 0.
     let ray = Ray.make rayOrigin rayVector
     let hitList = Shape.hitFunction ray hollowCylinderOrigo
- 
+
     List.length hitList |> should equal 0
 
 [<Fact>]
@@ -357,7 +360,7 @@ let ``hitFunction should return 1 hitpoints for ray which glancingly hits Hollow
     let rayVector = Vector.make 0. 0. 1.
     let ray = Ray.make rayOrigin rayVector
     let hitList = Shape.hitFunction ray hollowCylinderOrigo
- 
+
     List.length hitList |> should equal 1
 
 [<Fact>]
@@ -366,7 +369,7 @@ let ``hitFunction should return 1 hitpoints for ray which goes through and out t
     let rayVector = Vector.make 1. 2. 0.
     let ray = Ray.make rayOrigin rayVector
     let hitList = Shape.hitFunction ray hollowCylinderOrigo
- 
+
     List.length hitList |> should equal 1
 
 [<Fact>]
@@ -375,15 +378,14 @@ let ``hitFunction should return 0 hitpoints for ray which goes over HollowCylind
     let rayVector = Vector.make 1. 0. 0.
     let ray = Ray.make rayOrigin rayVector
     let hitList = Shape.hitFunction ray hollowCylinderOrigo
- 
+
     List.length hitList |> should equal 0
 
 [<Fact>]
-let ``hitFunction should return 0 hitpoints for ray which goes under HollowCylinder`` () = 
+let ``hitFunction should return 0 hitpoints for ray which goes under HollowCylinder`` () =
     let rayOrigin = Point.make -2. -0.5 0.
     let rayVector = Vector.make 1. 0. 0.
     let ray = Ray.make rayOrigin rayVector
     let hitList = Shape.hitFunction ray hollowCylinderOrigo
- 
-    List.length hitList |> should equal 0
 
+    List.length hitList |> should equal 0
