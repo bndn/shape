@@ -69,7 +69,6 @@ let ``mkTriangle should create a triangle with the specified arguments`` () =
 let ``mkTriangle should fail with specified arguments`` () =
     let Ap = Point.make 1. 2. 3.
     let Bp = Point.make 0. 4. -1.
-    let sphereOrigin = Point.make 1. 1. 1.
     (fun() -> Shape.mkTriangle Ap Bp Bp mat |> ignore)
     |> shouldFail
 
@@ -584,3 +583,47 @@ let ``hitFunction through the sides of a box returns hitpoints for both the side
 
     rightNormal |> should equal <| Vector.make 1. 0. 0.
     leftNormal |> should equal <| Vector.make -1. 0. 0.
+
+[<Fact>]
+let ``mkRectangle should create a plane with the specified arguments`` () =
+    let rectangleOrigin = Point.make 1. 1. 1.
+    let r = Shape.mkRectangle rectangleOrigin 2. 3. texture
+    r |> should be instanceOfType<Shape>
+
+[<Fact>]
+let ``mkRectangle with a width less than or equal 0 should fail`` () =
+    let rectangleOrigin = Point.make 1. 1. 1.
+    (fun() -> Shape.mkRectangle rectangleOrigin -1. 2. texture |> ignore)
+    |> shouldFail
+
+[<Fact>]
+let ``mkRectangle with a height less than or equal 0 should fail`` () =
+    let rectangleOrigin = Point.make 1. 1. 1.
+    (fun() -> Shape.mkRectangle rectangleOrigin 1. -0.5 texture |> ignore)
+    |> shouldFail
+
+[<Fact>]
+let ``hitFunction should return a hitpoint for a given ray and a rectangle`` () =
+    let rectangleOrigin = Point.make 0. 0. 0.
+    let r = Shape.mkRectangle rectangleOrigin 2. 3. texture
+
+    let rO = Point.make  1. 1. -1.
+    let rV = Vector.make 0. 0. 1.
+    let ray = Ray.make rO rV
+
+    let hit = Shape.hitFunction ray r
+
+    List.length hit |> should equal 1
+
+[<Fact>]
+let ``hitFunction shouldn't return a hitpoint for a given ray, which does not intersect a given rectangle`` () =
+    let rectangleOrigin = Point.make 0. 0. 0.
+    let r = Shape.mkRectangle rectangleOrigin 2. 3. texture
+
+    let rO = Point.make  1. 1. -1.
+    let rV = Vector.make 1. 0. 0.
+    let ray = Ray.make rO rV
+
+    let hit = Shape.hitFunction ray r
+
+    List.length hit |> should equal 0
