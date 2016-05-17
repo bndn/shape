@@ -122,7 +122,7 @@ let getBounds shape =
             cont (Some(bounds))
         | HollowCylinder(c,r,h,_) ->
             let cx, cy, cz = Point.getCoord c
-            let boundsP0 = Point.make (cx - r - e) (cy - r - e) (cz - r - e)
+            let boundsP0 = Point.make (cx - r - e) (cy - e) (cz - r - e)
             let bounds = (boundsP0, r * 2. + e, h + e, r * 2. + e)
             cont (Some(bounds))
         | Sphere(c, r, _)      ->
@@ -230,6 +230,27 @@ let mkSphere center radius texture =
 let mkHollowCylinder center radius height texture =
     if radius <= 0. || height <= 0. then raise NonPositiveShapeSizeException
     HollowCylinder(center, radius, height, texture)
+
+/// <summary>
+/// Make a solid cylinder with a center point of origin, a radius,
+/// a height and a texture.
+/// </summary>
+/// <param name=center>
+/// The center point at the bottom.
+/// of the cylinder.
+/// </param>
+/// <param name=radius>The radius of the cylinder.</param>
+/// <param name=height>
+/// The height of the cylinder.
+/// </param>
+/// <param name=t>The texture of the cylinder.</param>
+/// <returns>
+/// A hollow cylinder object, with a center point of origin, a radius,
+/// a height and a texture.
+/// </returns>
+//let mkSolidCylinder center radius height texture =
+//    if radius <= 0. || height <= 0. then raise NonPositiveShapeSizeException
+//    SolidCylinder(center, radius, height, texture)
 
 /// <summary>
 /// Make a triangle with points, `a`, `b` and `c`.
@@ -508,9 +529,14 @@ let rayPlaneHit rayO rayD p0 normal =
 let cylinderDeterminer d center r h rayV rayO texture=
     let hitPoint = Point.move rayO (Vector.multScalar rayV d)
 
-    let y = Point.getY hitPoint
-    let circleCenter = Point.move center (Vector.make 0. y 0.)
+    let hy = Point.getY hitPoint
+    let cy = Point.getY center
     let normal = Vector.make ((Point.getX hitPoint) / r) 0. ((Point.getZ hitPoint) / r)
+
+    // if we hit the backside, return the inverse normal
+    let normal =
+        if Vector.dotProduct rayV normal > 0.
+        then -normal else normal
 
     let phi' = atan2 (Vector.getX normal) (Vector.getZ normal)
     let phi =  if phi' < 0.
@@ -518,7 +544,7 @@ let cylinderDeterminer d center r h rayV rayO texture=
                 else phi'
 
     let u = phi / (2. * Math.PI)
-    let v = ((Point.getY hitPoint) / h) + 0.5
+    let v = (hy - cy) / h
 
     let material = Texture.getMaterial u v texture
 
@@ -838,8 +864,8 @@ let rec hitFunction ray shape =
         let distances = distance a b c
         let constrainedDistances = List.filter (fun dist ->
             let hitPoint = Point.move rayOrigin (Vector.multScalar rayVector dist)
-            let y = Point.getY hitPoint
-            y < (height + EPSILON) && y > -EPSILON) distances
+            let hy = Point.getY hitPoint
+            (y <= hy && hy <= height + y)) distances
 
         match constrainedDistances with
         | []         -> List.empty
