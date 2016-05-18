@@ -20,10 +20,12 @@ let origo = Point.make 0. 0. 0.
 let origoShiftOne = Point.make 0. 1. 0.
 let sphereOrigo = Shape.mkSphere origo 1. texture
 let planeOrigo = Shape.mkPlane origo (Vector.make 0. 1. 0.) texture
-let hollowCylinderOrigo = Shape.mkHollowCylinder origo 1. 2. texture
 let planeOrigoShiftOne = Shape.mkPlane origoShiftOne (Vector.make 0. 1. 0.) texture
 let spherePlaneUnion = Shape.mkUnion sphereOrigo planeOrigo
 let sphereShiftOne = Shape.mkSphere origoShiftOne 1. texture
+
+// The Cylinder will have it's bottom glancing with y in Origo
+let hollowCylinderOrigo = Shape.mkHollowCylinder origo 1. 2. texture
 
 let distCheck hitList distFloat index1 index2 =
     let distBetweenHits = abs ((Shape.getHitDistance (List.item index1 hitList)) - (Shape.getHitDistance (List.item index2 hitList)))
@@ -370,6 +372,15 @@ let ``getBounds returns None when the shape is a plane`` () =
 [<Fact>]
 let ``hitFunction should return 2 hitpoints for ray which hits HollowCylinder`` () =
     let rayOrigin = Point.make -3. 1. 0.
+    let rayVector = Vector.make 1. 0. 0.
+    let ray = Ray.make rayOrigin rayVector
+    let hitList = Shape.hitFunction ray hollowCylinderOrigo
+
+    List.length hitList |> should equal 2
+
+[<Fact>]
+let ``hitFunction should return 2 hitpoints for ray which hits top of HollowCylinder`` () =
+    let rayOrigin = Point.make -3. 1.5 0.
     let rayVector = Vector.make 1. 0. 0.
     let ray = Ray.make rayOrigin rayVector
     let hitList = Shape.hitFunction ray hollowCylinderOrigo
