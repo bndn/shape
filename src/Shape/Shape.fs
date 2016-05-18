@@ -26,6 +26,7 @@ type Shape =
     | Rectangle of Point * float * float * Texture
     | Sphere of Point * float * Texture
     | HollowCylinder of Point * float * float * Texture
+    | SolidCylinder of Point * float * float * Texture * Texture * Texture
     | Triangle of Point * Point * Point * Texture
     | Composite of Shape * Shape * Composition
     | Box of Point * Point * Texture * Texture * Texture * Texture * Texture * Texture
@@ -121,7 +122,7 @@ let getBounds shape =
             let boundsP0 = Point.make (px - e) (py - e) (pz - e)
             let bounds = (boundsP0, w + e, h + e, e * 2.)
             cont (Some(bounds))
-        | HollowCylinder(c,r,h,_) ->
+        | HollowCylinder(c,r,h,_) | SolidCylinder(c,r,h,_,_,_) ->
             let cx, cy, cz = Point.getCoord c
             let boundsP0 = Point.make (cx - r - e) (cy - e) (cz - r - e)
             let bounds = (boundsP0, r * 2. + e, h + e, r * 2. + e)
@@ -249,9 +250,9 @@ let mkHollowCylinder center radius height texture =
 /// A hollow cylinder object, with a center point of origin, a radius,
 /// a height and a texture.
 /// </returns>
-//let mkSolidCylinder center radius height texture =
-//    if radius <= 0. || height <= 0. then raise NonPositiveShapeSizeException
-//    SolidCylinder(center, radius, height, texture)
+let mkSolidCylinder center radius height texture topTexture botTexture =
+    if radius <= 0. || height <= 0. then raise NonPositiveShapeSizeException
+    SolidCylinder(center, radius, height, texture, topTexture, botTexture)
 
 /// <summary>
 /// Make a triangle with points, `a`, `b` and `c`.
@@ -887,6 +888,42 @@ let rec hitFunction ray shape =
         | [d1; d2]   -> [cylinderDeterminer d1 center radius height rayVector rayOrigin texture;
                          cylinderDeterminer d2 center radius height rayVector rayOrigin texture]
         | _          -> failwith "Error: Hitting a sphere more than two times!"
+    | SolidCylinder(center, radius, height, cylTexture, topTexture, botTexture) ->
+        let cylinder = HollowCylinder(center,radius,height,cylTexture)
+        let hitPoints = hitFunction ray cylinder
+        
+        let upVec = Vector.make 0. 1. 0.
+        let topCenter = (Point.move center (Vector.make 0. height 0.))
+
+        let discHits = []
+        let rphTop = rayPlaneHit rayOrigin rayVector topCenter upVec
+        let rphBot = rayPlaneHit rayOrigin rayVector center upVec
+        
+        let cylDiscDeterminer d hit normal r p0 t  =
+            let xCoord = Point.getX hit - Point.getX p0
+            let zCoord = Point.getZ hit - Point.getZ p0
+
+            if ((xCoord**2.) + (zCoord**2.)) <= r**2.
+            then
+                let u = (xCoord + r) / (2. * r)
+                let v = (zCoord + r) / (2. * r)
+                let material = Texture.getMaterial u v t
+                [Hit(d, normal, material)]
+            else
+                List.empty
+
+        let discHits = 
+            if rphTop.IsSome then
+                let t, hitPoint = rphTop.Value
+                discHits @ (cylDiscDeterminer t hitPoint upVec radius topCenter topTexture)
+            else discHits
+        let discHits =
+            if rphBot.IsSome then
+                let t, hitPoint = rphBot.Value
+                discHits @ (cylDiscDeterminer t hitPoint upVec radius center botTexture)
+            else discHits
+
+        discHits @ hitPoints
     | Triangle(a, b, c, t) ->
         let material =  Texture.getMaterial 0. 0. t
 

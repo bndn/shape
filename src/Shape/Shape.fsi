@@ -110,13 +110,11 @@ val mkSphere : center:Point -> radius:float -> t:Texture -> Shape
 /// a height and a texture.
 /// </summary>
 /// <param name=center>
-/// The center point at the bottom (or top, if the height is negative)
-/// of the cylinder.
+/// The center point at the bottom of the cylinder.
 /// </param>
 /// <param name=radius>The radius of the cylinder.</param>
 /// <param name=height>
-/// The height of the cylinder. Can be negative, which will make
-/// the cylinder grow in the negative direction of the y-axis.
+/// The height of the cylinder.
 /// </param>
 /// <param name=t>The texture of the cylinder.</param>
 /// <returns>
@@ -125,6 +123,29 @@ val mkSphere : center:Point -> radius:float -> t:Texture -> Shape
 /// </returns>
 val mkHollowCylinder : center:Point -> radius:float -> height:float ->
         t:Texture -> Shape
+
+/// <summary>
+/// Make a solid cylinder with a center point of origin, a radius,
+/// a height and a texture.
+/// </summary>
+/// <param name=center>
+/// The center point at the bottom of the cylinder.
+/// </param>
+/// <param name=radius>The radius of the cylinder.</param>
+/// <param name=height>
+/// The height of the cylinder.
+/// </param>
+/// <param name=cylT>The texture of the cylinder.</param>
+///// </param>
+/// <param name=topT>The texture of the top disc.</param>
+/// </param>
+/// <param name=botT>The texture of the bot disc.</param>
+/// <returns>
+/// A solid cylinder object, with a center point of origin, a radius,
+/// a height and a texture.
+/// </returns>
+val mkSolidCylinder : center:Point -> radius:float -> height:float ->
+        cylT:Texture -> topT:Texture -> botT:Texture -> Shape
 
 /// <summary>
 /// Make a triangle with points, `a`, `b` and `c`.
