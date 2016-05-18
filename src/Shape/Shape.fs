@@ -22,6 +22,7 @@ type Bounds = Point * float * float * float
 type Shape =
     | Plane of Point * Vector * Texture
     | Disc of Point * float * Texture
+    | Rectangle of Point * float * float * Texture
     | Sphere of Point * float * Texture
     | HollowCylinder of Point * float * float * Texture
     | Triangle of Point * Point * Point * Texture
@@ -114,6 +115,11 @@ let getBounds shape =
             let boundsP0 = Point.make (cx - r - e) (cy - r - e) (cz - e)
             let bounds = (boundsP0, r * 2. + e, r * 2. + e, e * 2.)
             cont (Some(bounds))
+        | Rectangle(p0, w, h, _) ->
+            let px, py, pz = Point.getCoord p0
+            let boundsP0 = Point.make (px - e) (py - e) (pz - e)
+            let bounds = (boundsP0, w + e, h + e, e * 2.)
+            cont (Some(bounds))
         | HollowCylinder(c,r,h,_) ->
             let cx, cy, cz = Point.getCoord c
             let boundsP0 = Point.make (cx - r - e) (cy - r - e) (cz - r - e)
@@ -175,6 +181,21 @@ let mkDisc p0 radius t =
     if radius <= 0.
     then raise NonPositiveShapeSizeException
     Disc(p0, radius, t)
+
+/// <summary>
+/// Make a rectangle with a point, a width, a height and a texture.
+/// </summary>
+/// <param name=p0>The bottom left point of the rectangle.</param>
+/// <param name=w>The width of the rectangle.</param>
+/// <param name=h>The height of the rectangle.</param>
+/// <param name=t>The texture of the rectangle.</param>
+/// <returns>
+/// A rectangle object.
+/// </returns>
+let mkRectangle p0 w h t =
+    if w <= 0. || h <= 0.
+    then raise NonPositiveShapeSizeException
+    Rectangle(p0, w, h, t)
 
 /// <summary>
 /// Make a sphere with a point of origin, a radius and a texture.
@@ -763,6 +784,34 @@ let rec hitFunction ray shape =
             then -up else up
 
         discDeterminer t hitpoint up radius p0 texture
+    | Rectangle(p0, w, h, texture) ->
+        let up = Vector.make 0. 0. 1.
+        let rph = rayPlaneHit rayOrigin rayVector p0 up
+        if rph.IsNone then List.empty else
+        let t, hitpoint = rph.Value
+
+        let pX = Point.getX p0
+        let pY = Point.getY p0
+
+        let hpX = Point.getX hitpoint
+        let hpY = Point.getY hitpoint
+
+        // check if we're within rectangle x-width
+        if pX <= hpX && hpX <= (pX + w)
+        then
+            // check if we're within rectangle y-height
+            if pY <= hpY && hpY <= (pY + h)
+            then
+                let u = (hpX - pX) / w
+                let v = (hpY - pY) / h
+
+                let material = Texture.getMaterial u v texture
+
+                [Hit(t, up, material)]
+            else
+                List.empty
+        else
+            List.empty
     | Sphere(center, radius, texture) ->
         let (dx, dy, dz) = Vector.getCoord rayVector
         let (ox, oy, oz) = Point.getCoord rayOrigin

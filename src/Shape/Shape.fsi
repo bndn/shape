@@ -83,6 +83,18 @@ val mkPlane : p0:Point -> up:Vector -> t:Texture -> Shape
 val mkDisc : p0:Point -> radius:float -> t:Texture -> Shape
 
 /// <summary>
+/// Make a rectangle with a point, a width, a height and a texture.
+/// </summary>
+/// <param name=p0>The bottom left point of the rectangle.</param>
+/// <param name=w>The width of the rectangle.</param>
+/// <param name=h>The height of the rectangle.</param>
+/// <param name=t>The texture of the rectangle.</param>
+/// <returns>
+/// A rectangle object.
+/// </returns>
+val mkRectangle : p0:Point -> w:float -> h:float -> t:Texture -> Shape
+
+/// <summary>
 /// Make a sphere with a point of origin, a radius and a texture.
 /// </summary>
 /// <param name=center>The center point of the sphere.</param>
