@@ -13,6 +13,7 @@ open Vector
 let EPSILON = 1.0e-6
 
 type Composition =
+    | Group
     | Union
     | Subtraction
     | Intersection
@@ -284,6 +285,14 @@ let mkBox low high front back top bottom left right =
     if low = high
     then failwith "Can not create a box with low and high in the same point."
     Box(low, high, front, back, top, bottom, left, right)
+
+/// <summary>
+/// Make a group CSG of two shapes.
+/// </summary>
+/// <param name=shape1>The first shape of the group.</param>
+/// <param name=shape2>The second shape of the group.</param>
+/// <returns>A group composite of the two shapes.</returns>
+let mkGroup shape1 shape2 = Composite(shape1, shape2, Group)
 
 /// <summary>
 /// Make a union between `shape1` and `shape2`.
@@ -873,7 +882,6 @@ let rec hitFunction ray shape =
         | [d1; d2]   -> [cylinderDeterminer d1 center radius height rayVector rayOrigin texture;
                          cylinderDeterminer d2 center radius height rayVector rayOrigin texture]
         | _          -> failwith "Error: Hitting a sphere more than two times!"
-
     | Triangle(a, b, c, t) ->
         let material =  Texture.getMaterial 0. 0. t
 
@@ -903,6 +911,8 @@ let rec hitFunction ray shape =
         if t > EPSILON
         then [Hit(t, n, material)]
         else List.empty
+    | Composite(shape1, shape2, Group) ->
+        hitFunction ray shape1 @ hitFunction ray shape2
     | Composite(shape1, shape2, composition) ->
         let hitTupleList = sortToTuples shape1 shape2 (hitFunction ray shape1) (hitFunction ray shape2)
         match composition with
@@ -912,6 +922,7 @@ let rec hitFunction ray shape =
             subtractionHitFunction ray hitTupleList [] false
         | Intersection ->
             intersectionHitFunction ray hitTupleList [] false
+        | _ -> failwith "Unknown composition type"
     | Box(low, high, front, back, top, bottom, left, right) ->
         let (lx, ly, lz) = Point.getCoord low
         let (hx, hy, hz) = Point.getCoord high
