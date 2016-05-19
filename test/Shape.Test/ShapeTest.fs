@@ -590,7 +590,7 @@ let ``hitFunction should return 0 hitpoints for ray deadcenter in subtraction of
     List.length hitList |> should equal 0
 
 [<Fact>]
-let ``hitFunction through the intersection of two spheres in subtraction returns 2 hits from the subtracted sphere`` () =
+let ``hitFunction through the intersection of two spheres in subtraction returns 0 hits from the subtracted sphere`` () =
     let subtraction = Shape.mkSubtraction sphereOrigo sphereShiftOne
     let rayOrigin = Point.make 0. 1.25 -3.
     let rayVector = Vector.make 0. 0. 1.
