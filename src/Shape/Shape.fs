@@ -736,38 +736,38 @@ let boxTexturer low high hit hn t =
     | (x, _, _) when x = -1. ->
                                 let boxHeight = abs(ly - hy)
                                 let boxDepth = abs(lz - hz)
-                                let u = 1.0 - (((Point.getZ hit) - lz) / boxDepth)
-                                let v = (((Point.getY hit) - ly) / boxHeight)
+                                let u = 1.0 - abs (((Point.getZ hit) - lz) / boxDepth)
+                                let v = abs (((Point.getY hit) - ly) / boxHeight)
                                 Texture.getMaterial u v t
     | (_, y, _) when y = -1. ->
                                 let boxWidth = abs(lx - hx)
                                 let boxDepth = abs(lz - hz)
-                                let u = 1.0 - (((Point.getX hit) - lx) / boxWidth)
-                                let v = (((Point.getZ hit) - lz) / boxDepth)
+                                let u = 1.0 - abs (((Point.getX hit) - lx) / boxWidth)
+                                let v = abs (((Point.getZ hit) - lz) / boxDepth)
                                 Texture.getMaterial u v t
     | (_, _, z) when z = -1. ->
                                 let boxWidth = abs(lx - hx)
                                 let boxHeight = abs(ly - hy)
                                 let u = (((Point.getX hit) - lx) / boxWidth)
-                                let v = (((Point.getY hit) - ly) / boxHeight)
+                                let v = abs (((Point.getY hit) - ly) / boxHeight)
                                 Texture.getMaterial u v t
     | (x, _, _) when x = 1. ->
                                 let boxHeight = abs(ly - hy)
                                 let boxDepth = abs(lz - hz)
                                 let u = ((Point.getZ hit) - lz) / boxDepth
-                                let v = ((Point.getY hit) - ly) / boxHeight
+                                let v = abs ((Point.getY hit) - ly) / boxHeight
                                 Texture.getMaterial u v t
     | (_, y, _) when y = 1. ->
                                 let boxWidth = abs(lx - hx)
                                 let boxDepth = abs(lz - hz)
                                 let u = ((Point.getX hit) - lx) / boxWidth
-                                let v = ((Point.getZ hit) - lz) / boxDepth
+                                let v = abs (((Point.getZ hit) - lz) / boxDepth)
                                 Texture.getMaterial u v t
     | (_, _, z) when z = 1. ->
                                 let boxWidth = abs(lx - hx)
                                 let boxHeight = abs(ly - hy)
-                                let u = 1.0 - (((Point.getX hit) - lx) / boxWidth)
-                                let v = ((Point.getY hit) - ly) / boxHeight
+                                let u = 1.0 - abs (((Point.getX hit) - lx) / boxWidth)
+                                let v = abs (((Point.getY hit) - ly) / boxHeight)
                                 Texture.getMaterial u v t
 
 
