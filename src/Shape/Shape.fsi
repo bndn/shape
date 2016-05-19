@@ -138,11 +138,43 @@ val mkHollowCylinder : center:Point -> radius:float -> height:float ->
 /// </returns>
 val mkTriangle : a:Point -> b:Point -> c:Point -> m:Material -> Shape
 
-val mkUnion : Shape -> Shape -> Shape
+/// <summary>
+/// Make a group CSG of two shapes.
+/// </summary>
+/// <param name=shape1>The first shape of the group.</param>
+/// <param name=shape2>The second shape of the group.</param>
+/// <returns>A group composite of the two shapes.</returns>
+val mkGroup : shape1:Shape -> shape2:Shape -> Shape
 
-val mkIntersection : Shape -> Shape -> Shape
+/// <summary>
+/// Make a union between `shape1` and `shape2`.
+/// </summary>
+/// <param name=shape1>`shape1` is the first shape in the union.</param>
+/// <param name=shape2>`shape2` is the second shape in the union.</param>
+/// <returns>
+/// The composite union of the two shapes, acting as a single solid shape.
+/// </returns>
+val mkUnion : shape1:Shape -> shape2:Shape -> Shape
 
-val mkSubtraction : Shape -> Shape -> Shape
+/// <summary>
+/// Make an intersection between `shape1` and `shape2`.
+/// </summary>
+/// <param name=shape1>`shape1` is the first shape in the intersection.</param>
+/// <param name=shape2>`shape1` is the second shape in the intersection.</param>
+/// <returns>
+/// The composite intersection of the two shapes, acting as the overlapping areas of the two shapes.
+/// </returns>
+val mkIntersection : shape1:Shape -> shape2:Shape -> Shape
+
+/// <summary>
+/// Subtracts `shape2` from `shape2`.
+/// </summary>
+/// <param name=shape1>`shape1` is the shape to be subtracted from.</param>
+/// <param name=shape2>`shape2` is the shape used for subtraction.</param>
+/// <returns>
+/// The composite subtraction of the two shapes, acting as a single solid shape.
+/// </returns>
+val mkSubtraction : shape1:Shape -> shape2:Shape -> Shape
 
 /// <summary>
 /// Make a box with a low and high point and 6 textures, one for each side.
