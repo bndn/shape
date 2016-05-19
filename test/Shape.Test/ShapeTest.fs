@@ -24,8 +24,9 @@ let planeOrigoShiftOne = Shape.mkPlane origoShiftOne (Vector.make 0. 1. 0.) text
 let spherePlaneUnion = Shape.mkUnion sphereOrigo planeOrigo
 let sphereShiftOne = Shape.mkSphere origoShiftOne 1. texture
 
-// The Cylinder will have it's bottom glancing with y in Origo
 let hollowCylinderOrigo = Shape.mkHollowCylinder origo 1. 2. texture
+
+let solidCylinderOrigo = Shape.mkSolidCylinder origo 1. 2. texture texture texture
 
 let distCheck hitList distFloat index1 index2 =
     let distBetweenHits = abs ((Shape.getHitDistance (List.item index1 hitList)) - (Shape.getHitDistance (List.item index2 hitList)))
@@ -415,6 +416,60 @@ let ``hitFunction should return 1 hitpoints for ray which goes through and out t
     List.length hitList |> should equal 1
 
 [<Fact>]
+let ``hitFunction should return 0 hitpoints for ray which goes over HollowCylinder`` () =
+    let rayOrigin = Point.make -2. 3. 0.
+    let rayVector = Vector.make 1. 0. 0.
+    let ray = Ray.make rayOrigin rayVector
+    let hitList = Shape.hitFunction ray hollowCylinderOrigo
+
+    List.length hitList |> should equal 0
+
+[<Fact>]
+let ``hitFunction should return 0 hitpoints for ray which goes under HollowCylinder`` () =
+    let rayOrigin = Point.make -2. -0.5 0.
+    let rayVector = Vector.make 1. 0. 0.
+    let ray = Ray.make rayOrigin rayVector
+    let hitList = Shape.hitFunction ray hollowCylinderOrigo
+
+    List.length hitList |> should equal 0
+
+[<Fact>]
+let ``hitFunction should return 2 hitpoints for ray which hits SolidCylinder`` () =
+    let rayOrigin = Point.make -3. 1. 0.
+    let rayVector = Vector.make 1. 0. 0.
+    let ray = Ray.make rayOrigin rayVector
+    let hitList = Shape.hitFunction ray solidCylinderOrigo
+
+    List.length hitList |> should equal 2
+
+[<Fact>]
+let ``hitFunction should return 2 hitpoints for ray which goes through and out the top of SolidCylinder`` () =
+    let rayOrigin = Point.make -1.5 0. 0.
+    let rayVector = Vector.make 1. 2. 0.
+    let ray = Ray.make rayOrigin rayVector
+    let hitList = Shape.hitFunction ray solidCylinderOrigo
+
+    List.length hitList |> should equal 2
+
+[<Fact>]
+let ``hitFunction should return 2 hitpoints for ray which goes down the middle of SolidCylinder`` () =
+    let rayOrigin = Point.make 0. 3. 0.
+    let rayVector = Vector.make 0. -1. 0.
+    let ray = Ray.make rayOrigin rayVector
+    let hitList = Shape.hitFunction ray solidCylinderOrigo
+
+    List.length hitList |> should equal 2
+
+[<Fact>]
+let ``hitFunction should return 2 hitpoints for ray which goes through the bottom and out the side of SolidCylinder`` () =
+    let rayOrigin = Point.make 0. -0.5 0.
+    let rayVector = Vector.make 1. 1. 0.
+    let ray = Ray.make rayOrigin rayVector
+    let hitList = Shape.hitFunction ray solidCylinderOrigo
+
+    List.length hitList |> should equal 2
+
+[<Fact>]
 let ``hitFunction should return 2 hitpoints 1 unit apart for deadcenter ray and an intersection of two adjacent spheres`` () =
     let intersection = Shape.mkIntersection sphereOrigo sphereShiftOne
     let rayOrigin = Point.make 0. -3. 0.
@@ -455,15 +510,6 @@ let ``hitFunction should return 1 hitpoints for ray which hits sphere deadcenter
     let hitList = Shape.hitFunction ray intersection
 
     List.length hitList |> should equal 1
-
-[<Fact>]
-let ``hitFunction should return 0 hitpoints for ray which goes over HollowCylinder`` () =
-    let rayOrigin = Point.make -2. 3. 0.
-    let rayVector = Vector.make 1. 0. 0.
-    let ray = Ray.make rayOrigin rayVector
-    let hitList = Shape.hitFunction ray hollowCylinderOrigo
-
-    List.length hitList |> should equal 0
 
 [<Fact>]
 let ``hitFunction should return 2 hitpoints 1 unit apart for deadcenter ray in subtraction of two adjacent spheres`` () =
@@ -507,15 +553,6 @@ let ``hitFunction should return 0 hitpoints for ray centered in sphere2, glancin
     let rayVector = Vector.make 2. 0. 0.
     let ray = Ray.make rayOrigin rayVector
     let hitList = Shape.hitFunction ray subtraction
-
-    List.length hitList |> should equal 0
-
-[<Fact>]
-let ``hitFunction should return 0 hitpoints for ray which goes under HollowCylinder`` () =
-    let rayOrigin = Point.make -2. -0.5 0.
-    let rayVector = Vector.make 1. 0. 0.
-    let ray = Ray.make rayOrigin rayVector
-    let hitList = Shape.hitFunction ray hollowCylinderOrigo
 
     List.length hitList |> should equal 0
 
