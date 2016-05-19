@@ -473,6 +473,11 @@ let sphereDeterminer d center rayV rayO t =
               then phi' + 2. * Math.PI
               else phi'
 
+    // if we hit the backside, return the inverse normal
+    let n =
+        if Vector.dotProduct rayV n > 0.
+        then -n else n
+
     let u = phi / (2. * Math.PI)   // u coordinate in texture space
     let v = 1. - (theta / Math.PI) // v coordinate in texture space
 
@@ -969,6 +974,16 @@ let rec hitFunction ray shape =
 
         let (tminHitNormal, tminTexture) = sideHit tminHit
         let (tmaxHitNormal, tmaxTexture) = sideHit tmaxHit
+
+        // if we hit the backside, return the inverse normal
+        let tminHitNormal =
+            if Vector.dotProduct rayVector tminHitNormal > 0.
+            then -tminHitNormal else tminHitNormal
+
+        // if we hit the backside, return the inverse normal
+        let tmaxHitNormal =
+            if Vector.dotProduct rayVector tmaxHitNormal > 0.
+            then -tmaxHitNormal else tmaxHitNormal
 
         let tminHitMaterial = boxTexturer low high tminHit tminHitNormal tminTexture
         let tmaxHitMaterial = boxTexturer low high tmaxHit tmaxHitNormal tmaxTexture

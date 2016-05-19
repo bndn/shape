@@ -1,4 +1,4 @@
-﻿module ShapeTest
+module ShapeTest
 
 open Xunit
 open FsUnit.Xunit
@@ -569,9 +569,9 @@ let ``hitFunction through the top of a box returns hitpoints for the top and bot
 
     let topNormal = Shape.getHitNormal top
     let bottomNormal = Shape.getHitNormal bottom
-
-    topNormal |> should equal <| Vector.make 0. 1. 0.
-    bottomNormal |> should equal <| Vector.make 0. -1. 0.
+    
+    topNormal |> should equal (Vector.make 0. 1. 0.)
+    bottomNormal |> should equal (Vector.make 0. 1. 0.)
 
 [<Fact>]
 let ``hitFunction through the sides of a box returns hitpoints for both the sides`` () =
@@ -592,8 +592,8 @@ let ``hitFunction through the sides of a box returns hitpoints for both the side
     let rightNormal = Shape.getHitNormal right
     let leftNormal = Shape.getHitNormal left
 
-    rightNormal |> should equal <| Vector.make 1. 0. 0.
-    leftNormal |> should equal <| Vector.make -1. 0. 0.
+    rightNormal |> should equal (Vector.make 1. 0. 0.)
+    leftNormal |> should equal (Vector.make 1. 0. 0.)
 
 [<Fact>]
 let ``mkRectangle should create a plane with the specified arguments`` () =
