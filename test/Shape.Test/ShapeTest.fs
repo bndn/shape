@@ -600,6 +600,16 @@ let ``hitFunction through the intersection of two spheres in subtraction returns
     List.length hitList |> should equal 0
 
 [<Fact>]
+let ``hitFunction through the intersection of two spheres in subtraction returns 2 hits from the subtracted sphere`` () =
+    let subtraction = Shape.mkSubtraction sphereOrigo sphereShiftOne
+    let rayOrigin = Point.make 0. 3. 0.
+    let rayVector = Vector.make 0. -1. 0.
+    let ray = Ray.make rayOrigin rayVector
+    let hitList = Shape.hitFunction ray subtraction
+
+    List.length hitList |> should equal 2
+
+[<Fact>]
 let ``hitFunction through the top of a box returns hitpoints for the top and bottom`` () =
     let low = Point.make 0. 0. 0.
     let high = Point.make 1. 1. 1.

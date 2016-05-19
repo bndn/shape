@@ -699,7 +699,7 @@ let rec subtractionHitFunction ray hitTupleList hitList inSubtraction =
     | (id1,s1,h1) :: (id2,s2,h2) :: hitTupleList when id1 <> id2 ->
         match inSubtraction with
         | true when id1 = 1 -> subtractionHitFunction ray hitTupleList hitList false
-        | true when id1 = 2 -> subtractionHitFunction ray hitTupleList (h2 :: hitList) false
+        | true when id1 = 2 -> subtractionHitFunction ray hitTupleList (h1 :: h2 :: hitList) false
         | false when id1 = 1 -> subtractionHitFunction ray hitTupleList (h2 :: h1 :: hitList) (not (isOrthogonal ray (getHitNormal h2) || shapeNonSolid ray h2 s2 id))
         | false when id1 = 2 -> subtractionHitFunction ray hitTupleList hitList true
     | (id,s,h) :: hitTupleList ->
