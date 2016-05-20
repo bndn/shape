@@ -1,12 +1,15 @@
 {
     "version": "0.0.0",
-    "description": "Library built for the creation of shapes.",
+    "description": "A library for creating shapes, and checking for ray-shape intersections",
     "authors": [
         "Markus Thomsen <matho@itu.dk>",
         "Andreas Bjørn Hassing Nielsen <abhn@itu.dk>",
         "Anders Munck Højsgaard <amuh@itu.dk>"
     ],
     "tags": [
+        "shape",
+        "3d",
+        "intersection"
     ],
     "projectUrl": "https://github.itu.dk/bndn/shape",
     "licenseUrl": "https://github.itu.dk/bndn/shape/blob/master/LICENSE.md",
@@ -16,15 +19,12 @@
         "Point": "",
         "Ray": "",
         "Texture": "",
+        "Transform": "",
         "Vector": "",
         "FSharp.Dnx": {
             "type": "build",
             "version": "1.0.0-*"
         }
-    },
-
-    "commands": {
-        "run": "run"
     },
 
     "frameworks": {
@@ -38,8 +38,17 @@
     },
     "fsharp": {
         "files": [
+            "Utils.fs",
             "Shape.fsi",
-            "Shape.fs"
+            "Shape.fs",
+            "Triangle.fs",
+            "Sphere.fs",
+            "Plane.fs",
+            "Rectangle.fs",
+            "Cylinder.fs",
+            "Disc.fs",
+            "Box.fs",
+            "Composite.fs"
         ]
     }
 }
