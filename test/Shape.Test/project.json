@@ -26,7 +26,7 @@
     },
     "fsharp": {
         "files": [
-            "ShapeTest.fs"
+            "CompositeTest.fs"
         ]
     }
 }
