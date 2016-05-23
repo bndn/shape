@@ -6,80 +6,83 @@ open Texture
 open Vector
 open Utils
 
+type Side =
+    | Front | Back
+    | Top   | Bottom
+    | Left  | Right
+
 [<NoComparison>]
 type Box =
     Box of Point * Point * Texture * Texture * Texture * Texture * Texture * Texture
 
 /// <summary>
-/// Double Equal. Checks if two doubles are "equal" to
-/// eachother with a precision of EPSILON.
+/// Double Equal. Checks if two doubles are "equal" to each other
+/// within a precision of Epsilon.
 /// </summary>
 /// <param name=a>The first double to compare.</param>
 /// <param name=b>The second double to compare.</param>
 /// <returns>
-/// If the two doubles are (very close to being) equal to eachother.
+/// If the two doubles are (very close to being) equal to each other.
 /// </returns>
 let deq a b = abs (a - b) < Epsilon
 
 /// <summary>
 /// Takes the low and high point, a hitpoint, a hitnormal at the point and
-/// the texture from a box to return the UV coordinates at the specific point.
+/// the texture from a box to return the material at the specific point.
 /// </summary>
-/// <param name=low>The low point of the box.</params>
-/// <param name=high>The high point of the box.</params>
-/// <param name=hit>The hitpoint, from which the texture should be retrieved.</params>
-/// <param name=hn>The hitnormal at the hitpoint.</params>
+/// <param name=lo>Low point of the box.</params>
+/// <param name=hi>High point of the box.</params>
+/// <param name=hit>Hitpoint to get the material from.</params>
+/// <param name=s>Side that the ray hit.</param>
 /// <param name=t>The texture on the relevant side of the hitpoint.</params>
-/// <returns>
-/// The UV coordinates at the hitpoint.
-/// </returns>
-let boxDeterminer lo hi hit hn t =
+/// <returns>Material at the hitpoint.</returns>
+let boxDeterminer lo hi hit s t =
     let lx, ly, lz = Point.getCoord lo
     let hx, hy, hz = Point.getCoord hi
-    match Vector.getCoord hn with
-    | (x, _, _) when deq x -1. ->
-        let boxHeight = abs(ly - hy)
-        let boxDepth = abs(lz - hz)
-        let u = 1.0 - abs (((Point.getZ hit) - lz) / boxDepth)
-        let v = abs (((Point.getY hit) - ly) / boxHeight)
-        Texture.getMaterial u v t
-    | (_, y, _) when deq y -1. ->
-        let boxWidth = abs(lx - hx)
-        let boxDepth = abs(lz - hz)
-        let u = 1.0 - abs (((Point.getX hit) - lx) / boxWidth)
-        let v = abs (((Point.getZ hit) - lz) / boxDepth)
-        Texture.getMaterial u v t
-    | (_, _, z) when deq z -1. ->
-        let boxWidth = abs(lx - hx)
-        let boxHeight = abs(ly - hy)
-        let u = (((Point.getX hit) - lx) / boxWidth)
-        let v = abs (((Point.getY hit) - ly) / boxHeight)
-        Texture.getMaterial u v t
-    | (x, _, _) when deq x 1. ->
-        let boxHeight = abs(ly - hy)
-        let boxDepth = abs(lz - hz)
-        let u = ((Point.getZ hit) - lz) / boxDepth
-        let v = abs ((Point.getY hit) - ly) / boxHeight
-        Texture.getMaterial u v t
-    | (_, y, _) when deq y 1. ->
-        let boxWidth = abs(lx - hx)
-        let boxDepth = abs(lz - hz)
-        let u = ((Point.getX hit) - lx) / boxWidth
-        let v = abs (((Point.getZ hit) - lz) / boxDepth)
-        Texture.getMaterial u v t
-    | (_, _, z) when deq z 1. ->
-        let boxWidth = abs(lx - hx)
-        let boxHeight = abs(ly - hy)
-        let u = 1.0 - abs (((Point.getX hit) - lx) / boxWidth)
-        let v = abs (((Point.getY hit) - ly) / boxHeight)
-        Texture.getMaterial u v t
-    | _ -> failwith "Paradox: Hit a box side, without hitting it"
+    let hpx, hpy, hpz = Point.getCoord hit
+    let boxHeight = abs (hy - ly)
+    let boxWidth = abs (hx - lx)
+    let boxDepth = abs (hz - lz)
+
+    let u, v = match s with
+               | Front  -> let u = (abs (hpx - lx)) / boxWidth
+                           let v = (abs (hpy - ly)) / boxHeight in (u, v)
+               | Top    -> let u = (abs (hpx - lx)) / boxWidth
+                           let v = (abs (hpz - lz)) / boxDepth  in (u, v)
+               | Left   -> let u = (abs (hpy - ly)) / boxHeight
+                           let v = (abs (hpz - lz)) / boxDepth  in (u, v)
+               | Right  -> let u = (abs (hpy - ly)) / boxHeight
+                           let v = (abs (hpz - lz)) / boxDepth  in (u, v)
+               | Back   -> let u = (abs (hpx - lx)) / boxWidth
+                           let v = (abs (hpy - ly)) / boxHeight in (u, v)
+               | Bottom -> let u = (abs (hpx - lx)) / boxWidth
+                           let v = (abs (hpz - lz)) / boxDepth  in (u, v)
+
+    Texture.getMaterial u v t
+
+/// <summary>
+/// Get the hit normal from a ray to a side of the box.
+/// </summary>
+/// <param name=side>Side which was hit.</param>
+/// <param name=rayD>Ray direction.</param>
+/// <returns>Hit normal from the ray-box intersection.</returns>
+let hitNormal side rayD =
+    let normal = match side with
+                 | Front  -> Vector.make 0. 0. 1.
+                 | Top    -> Vector.make 0. 1. 0.
+                 | Left   -> Vector.make -1. 0. 0.
+                 | Right  -> Vector.make 1. 0. 0.
+                 | Back   -> Vector.make 0. 0. -1.
+                 | Bottom -> Vector.make 0. -1. 0.
+    if Vector.dotProduct rayD normal > 0.
+    then -normal
+    else normal
 
 /// <summary>
 /// Compute an intersection between a ray and a box.
 /// </summary>
 /// <param name=box>Box to check intersection with.</param>
-/// <param name=r>Ray to check intersection with.</param>
+/// <param name=ray>Ray to check intersection with.</param>
 /// <returns>
 /// The list of 0 to 2 hit distances from the ray origin to the hitpoints
 /// on the shape. Only returns hitpoints that intersect in the positive
@@ -115,32 +118,29 @@ let intersect (Box(lo, hi, fr, ba, t, b, l, r)) ray =
 
     let sideHit hitpoint =
         match Point.getCoord hitpoint with
-        | (x, _, _) when deq x lx -> (Vector.make -1. 0. 0., l)
-        | (_, y, _) when deq y ly -> (Vector.make 0. -1. 0., b)
-        | (_, _, z) when deq z lz -> (Vector.make 0. 0. -1., ba)
-        | (x, _, _) when deq x hx -> (Vector.make 1. 0. 0., r)
-        | (_, y, _) when deq y hy -> (Vector.make 0. 1. 0., t)
-        | (_, _, z) when deq z hz -> (Vector.make 0. 0. 1., fr)
+        // ordered based on the statistical likelyhood of getting selected,
+        // having the most probable at the top will in most cases yield
+        // faster runtimes, as the unlikely cases are tested less often, see:
+        // https://msdn.microsoft.com/en-us/library/dd547125(v=vs.110).aspx
+        | (_, _, z) when deq z hz -> (Front,  fr)
+        | (_, y, _) when deq y hy -> (Top,    t)
+        | (x, _, _) when deq x lx -> (Left,   l)
+        | (x, _, _) when deq x hx -> (Right,  r)
+        | (_, _, z) when deq z lz -> (Back,   ba)
+        | (_, y, _) when deq y ly -> (Bottom, b)
         | _ -> failwith "Paradox: Hit a box side, without hitting it"
 
-    let tminHitNormal, tminTexture = sideHit tminHit
-    let tmaxHitNormal, tmaxTexture = sideHit tmaxHit
+    let tminSide, tminTexture = sideHit tminHit
+    let tmaxSide, tmaxTexture = sideHit tmaxHit
 
-    // if we hit the backside, return the inverse normal
-    let tminHitNormal = if Vector.dotProduct rayD tminHitNormal > 0.
-                        then -tminHitNormal else tminHitNormal
-    let tmaxHitNormal = if Vector.dotProduct rayD tmaxHitNormal > 0.
-                        then -tmaxHitNormal else tmaxHitNormal
-
-
-    let tminHitMat = boxDeterminer lo hi tminHit tminHitNormal tminTexture
-    let tmaxHitMat = boxDeterminer lo hi tmaxHit tmaxHitNormal tmaxTexture
+    let tminHitMat = boxDeterminer lo hi tminHit tminSide tminTexture
+    let tmaxHitMat = boxDeterminer lo hi tmaxHit tmaxSide tmaxTexture
 
     match (tmin > 0., tmax > 0.) with
-    | (true, true)   -> [Hit(tmin, tminHitNormal, tminHitMat);
-                         Hit(tmax, tmaxHitNormal, tmaxHitMat)]
-    | (true, false)  -> [Hit(tmin, tminHitNormal, tminHitMat)]
-    | (false, true)  -> [Hit(tmax, tmaxHitNormal, tmaxHitMat)]
+    | (true, true)   -> [Hit(tmin, hitNormal tminSide rayD, tminHitMat);
+                         Hit(tmax, hitNormal tmaxSide rayD, tmaxHitMat)]
+    | (true, false)  -> [Hit(tmin, hitNormal tminSide rayD, tminHitMat)]
+    | (false, true)  -> [Hit(tmax, hitNormal tmaxSide rayD, tmaxHitMat)]
     | (false, false) -> []
 
 /// <summary>
@@ -167,7 +167,12 @@ let bounds (Box(lo, hi, _, _, _, _, _, _)) =
 /// </summary>
 /// <param name=lo>Low point of the box.</param>
 /// <param name=hi>High point of the box.</param>
-/// <param name=t>Texture of the box.</param>
+/// <param name=fr>Front side texture of the box.</param>
+/// <param name=ba>Back side texture of the box.</param>
+/// <param name=t>Top side texture of the box.</param>
+/// <param name=b>Bottom side texture of the box.</param>
+/// <param name=l>Left side texture of the box.</param>
+/// <param name=r>Right side texture of the box.</param>
 /// <returns>A box shape.</returns>
 let make lo hi fr ba t b l r =
     if lo = hi
