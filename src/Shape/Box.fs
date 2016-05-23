@@ -1,6 +1,8 @@
 // Copyright (C) 2015 The Authors.
 module Shape.Box
 
+open System // to check if doubles are NaN
+
 open Point
 open Texture
 open Vector
@@ -113,6 +115,11 @@ let intersect (Box(lo, hi, fr, ba, t, b, l, r)) ray =
     if tmin > tzmax || tzmin > tmax then List.empty else
 
     let tmin, tmax = max tzmin tmin, min tzmax tmax
+
+    // when we're really close to hitting the shape, we might get
+    // some falsy hits, avoid this by checking if tmin or tmax are NaN.
+    // the IsNaN operation is acceptably fast, see https://goo.gl/D7aPnJ
+    if Double.IsNaN(tmin) || Double.IsNaN(tmax) then List.empty else
     let tminHit = Point.move rayO (Vector.multScalar rayD tmin)
     let tmaxHit = Point.move rayO (Vector.multScalar rayD tmax)
 

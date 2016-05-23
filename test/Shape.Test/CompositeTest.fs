@@ -10,17 +10,10 @@ open Vector
 open Texture
 open Point
 open Shape
-open Shape.Sphere
-open Shape.Composite
+open Test.Utils
 
-let Epsilon = Shape.Epsilon
-let c = Color.make 0. 0. 0.
-let mat = Material.make c 0.5
-let texture = Texture.make (fun _ _ -> mat)
-let origo = Point.make 0. 0. 0.
-let origoShift = Point.make 0. 1. 0.
-let sphereOrigo = Shape.Sphere.make origo 1. texture
-let sphereShift = Shape.Sphere.make origoShift 1. texture
+let sphereOrigo = Sphere.make origo 1. texture
+let sphereShift = Sphere.make shift 1. texture
 
 let distCheck hitList distFloat index1 index2 =
     let distBetweenHits = abs ((Shape.hitDistance (List.item index1 hitList)) - (Shape.hitDistance (List.item index2 hitList)))
@@ -77,7 +70,7 @@ let ``hitFunction should return 2 glancing hitpoints for offcenter ray and a uni
     let hitList = Shape.hit ray union
 
     List.length hitList |> should equal 2
-   
+
 [<Fact>]
 let ``hitFunction should return 2 hitpoints 1 unit apart for deadcenter ray in subtraction of two adjacent spheres`` () =
     let subtraction = Composite.make sphereOrigo sphereShift Composite.Subtraction
@@ -174,5 +167,3 @@ let ``hitFunction should return 1 hitpoints for ray glancing shape2 in shape1 in
     let hitList = Shape.hit ray intersection
 
     List.length hitList |> should equal 1
-
-
