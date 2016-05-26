@@ -15,9 +15,11 @@
     "licenseUrl": "https://github.itu.dk/bndn/shape/blob/master/LICENSE.md",
 
     "dependencies": {
+        "Expression": "",
         "Material": "",
         "Meshly": "",
         "Point": "",
+        "Polynomial": "",
         "Ray": "",
         "Texture": "",
         "Transform": "",
@@ -29,7 +31,11 @@
     },
 
     "frameworks": {
-        "dnx451": {}
+        "dnx451": {
+            "frameworkAssemblies": {
+                "System.Numerics": "4.0.0.0"
+            }
+        }
     },
 
     "compiler": {
@@ -59,7 +65,9 @@
             "Composite.fsi",
             "Composite.fs",
             "Mesh.fsi",
-            "Mesh.fs"
+            "Mesh.fs",
+            "Implicit.fsi",
+            "Implicit.fs"
         ]
     }
 }

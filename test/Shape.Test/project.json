@@ -26,7 +26,7 @@
     },
     "fsharp": {
         "files": [
-            "Utils.fs",
+            "TestUtils.fs",
             "SphereTest.fs",
             "TriangleTest.fs",
             "RectangleTest.fs",
@@ -34,7 +34,8 @@
             "DiscTest.fs",
             "CylinderTest.fs",
             "BoxTest.fs",
-            "CompositeTest.fs"
+            "CompositeTest.fs",
+            "UtilsTest.fs"
         ]
     }
 }
