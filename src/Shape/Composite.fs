@@ -157,7 +157,7 @@ let intersect (Composite(s1, s2, c)) ray =
         match c with
         | Union        -> unionHitFunction ray tupleList [] false false
         | Subtraction  -> subtractionHitFunction ray tupleList [] false false
-        | Intersection -> intersectionHitFunction ray tupleList [] false false
+        | _            -> intersectionHitFunction ray tupleList [] false false
 
 /// <summary>
 /// Combine the bounds of two shapes into a single boundary.
