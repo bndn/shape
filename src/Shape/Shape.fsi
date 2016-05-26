@@ -64,6 +64,23 @@ val solid : s:Shape -> bool
 val make : h:(Ray -> Hit list) -> isSolid:bool -> b:Bounds option -> Shape
 
 /// <summary>
+/// Creates a base shape.
+/// </summary>
+/// <param name=h>Hitfunction of the shape.</param>
+/// <param name=b>Bounds option of the shape.</param>
+/// <param name=isSolid>If the shape is solid or not.</param>
+/// <returns>A base shape.</returns>
+val makeBaseShape : h:(Ray -> Texture -> Hit list) -> isSolid:bool -> b:Bounds option -> Shape
+
+/// <summary>
+/// Takes a BaseShape and re-texturizes it.
+/// </summary>
+/// <param name=b>The BaseShape input.</param>
+/// <param name=t>The texture to apply.</param>
+/// <returns>A texturized shape.</returns>
+val texturize : b:Shape -> t:Texture -> Shape
+
+/// <summary>
 /// Get the bounds of a shape.
 /// </summary>
 /// <param name=s>Shape to get the bounds of.</param>
