@@ -91,8 +91,8 @@ let solid s =
 /// Create a generic shape.
 /// </summary>
 /// <param name=h>Hitfunction of the shape.</param>
-/// <param name=b>Bounds option of the shape.</param>
 /// <param name=isSolid>If the shape is solid or not.</param>
+/// <param name=b>Bounds option of the shape.</param>
 /// <returns>A generic shape.</returns>
 let make h isSolid b = Shape(h, isSolid, b, None)
 
@@ -100,8 +100,8 @@ let make h isSolid b = Shape(h, isSolid, b, None)
 /// Creates a base shape.
 /// </summary>
 /// <param name=h>Hitfunction of the shape.</param>
-/// <param name=b>Bounds option of the shape.</param>
 /// <param name=isSolid>If the shape is solid or not.</param>
+/// <param name=b>Bounds option of the shape.</param>
 /// <returns>A base shape.</returns>
 let makeBaseShape h isSolid b = BaseShape(h, isSolid, b, None, None)
 

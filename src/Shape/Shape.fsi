@@ -59,7 +59,8 @@ val solid : s:Shape -> bool
 /// Create a generic shape.
 /// </summary>
 /// <param name=h>Hitfunction of the shape.</param>
-/// <param name=t>Texture of the shape.</param>
+/// <param name=isSolid>If the shape is solid or not.</param>
+/// <param name=b>Bounds option of the shape.</param>
 /// <returns>A generic shape.</returns>
 val make : h:(Ray -> Hit list) -> isSolid:bool -> b:Bounds option -> Shape
 
@@ -67,8 +68,8 @@ val make : h:(Ray -> Hit list) -> isSolid:bool -> b:Bounds option -> Shape
 /// Creates a base shape.
 /// </summary>
 /// <param name=h>Hitfunction of the shape.</param>
-/// <param name=b>Bounds option of the shape.</param>
 /// <param name=isSolid>If the shape is solid or not.</param>
+/// <param name=b>Bounds option of the shape.</param>
 /// <returns>A base shape.</returns>
 val makeBaseShape : h:(Ray -> Texture -> Hit list) -> isSolid:bool -> b:Bounds option -> Shape
 
