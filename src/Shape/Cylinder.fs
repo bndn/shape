@@ -182,7 +182,7 @@ let bounds cylinder =
 /// Create a hollow cylinder shape.
 /// </summary>
 /// <param name=c>Center of the cylinder.</param>
-/// <param name=w>Width of the cylinder.</param>
+/// <param name=r>Radius of the cylinder.</param>
 /// <param name=h>Height of the cylinder.</param>
 /// <param name=t>Texture of the cylinder.</param>
 /// <returns>A hollow cylinder shape.</returns>
@@ -196,7 +196,7 @@ let makeHollow c r h t =
 /// Create a solid cylinder shape.
 /// </summary>
 /// <param name=c>Center of the cylinder.</param>
-/// <param name=w>Width of the cylinder.</param>
+/// <param name=r>Radius of the cylinder.</param>
 /// <param name=h>Height of the cylinder.</param>
 /// <param name=t>Texture of the cylinder.</param>
 /// <param name=top>Texture of the top disc.</param>

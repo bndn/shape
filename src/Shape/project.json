@@ -42,14 +42,23 @@
             "Utils.fs",
             "Shape.fsi",
             "Shape.fs",
+            "Triangle.fsi",
             "Triangle.fs",
+            "Sphere.fsi",
             "Sphere.fs",
+            "Plane.fsi",
             "Plane.fs",
+            "Rectangle.fsi",
             "Rectangle.fs",
+            "Cylinder.fsi",
             "Cylinder.fs",
+            "Disc.fsi",
             "Disc.fs",
+            "Box.fsi",
             "Box.fs",
+            "Composite.fsi",
             "Composite.fs",
+            "Mesh.fsi",
             "Mesh.fs"
         ]
     }
