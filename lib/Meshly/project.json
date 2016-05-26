@@ -2,7 +2,7 @@
     "frameworks": {
         "dnx451": {
             "bin": {
-                "assembly": "Meshly.0.0.0.dll"
+                "assembly": "Meshly.0.0.1.dll"
             }
         }
     }
